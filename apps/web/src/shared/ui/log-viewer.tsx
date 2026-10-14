@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, Input, Select } from "@/shared/ui/primitives";
 
@@ -11,6 +11,7 @@ type LogViewerProps = {
   onTogglePause: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  followTail?: boolean;
 };
 
 function lineLevel(line: string): LogLevel {
@@ -34,7 +35,9 @@ export function LogViewer({
   onTogglePause,
   onRefresh,
   isRefreshing,
+  followTail = false,
 }: LogViewerProps) {
+  const preRef = useRef<HTMLPreElement>(null);
   const [level, setLevel] = useState<LogLevel>("ALL");
   const [filter, setFilter] = useState("");
   const [wrap, setWrap] = useState(true);
@@ -52,6 +55,22 @@ export function LogViewer({
       return true;
     });
   }, [lines, level, filter]);
+
+  useEffect(() => {
+    if (!followTail || pollPaused) return;
+    const el = preRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [followTail, pollPaused, visible.length, text]);
+
+  const downloadFiltered = () => {
+    const blob = new Blob([visible.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "job-logs.txt";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   const copyAll = async () => {
     const payload = visible.join("\n");
@@ -104,10 +123,13 @@ export function LogViewer({
         <Button variant="secondary" size="sm" onClick={copyAll}>
           Copy filtered
         </Button>
+        <Button variant="secondary" size="sm" onClick={downloadFiltered}>
+          Download
+        </Button>
         {pollPaused && <span className="log-toolbar-hint">Tail paused</span>}
         {copyHint && <span className="log-toolbar-hint">{copyHint}</span>}
       </div>
-      <pre className={`log-viewer ${wrap ? "log-wrap" : ""}`}>
+      <pre ref={preRef} className={`log-viewer ${wrap ? "log-wrap" : ""}`}>
         {errorMessage && !text
           ? "(no log body — use Refresh after fixing API or switching to live Ray jobs)"
           : visible.length

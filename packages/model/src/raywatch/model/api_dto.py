@@ -37,6 +37,10 @@ class JobLogsResponse(BaseModel):
     job_id: str
     logs: str = ""
     error_message: str | None = None
+    """Character offset of `logs` within the full job log body."""
+    content_offset: int = 0
+    """Total character length of the full job log on the server."""
+    content_length: int = 0
     sync: SyncMeta
 
 

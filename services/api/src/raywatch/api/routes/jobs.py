@@ -3,6 +3,7 @@ from datetime import datetime
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 from raywatch.adapter_ray.job_logs import fetch_logs_for_job
+from raywatch.adapter_ray.log_slice import slice_job_logs
 from raywatch.adapter_ray.ray_client import request_stop_job
 from raywatch.api.state import live_cache
 from raywatch.engine.job_list import list_jobs as list_jobs_merged
@@ -86,14 +87,29 @@ def list_job_tasks(
 
 
 @router.get("/{job_id}/logs", response_model=JobLogsResponse)
-async def get_job_logs(job_id: str) -> JobLogsResponse:
+async def get_job_logs(
+    job_id: str,
+    tail_lines: int | None = Query(default=None, ge=1, le=50_000),
+    after_offset: int | None = Query(default=None, ge=0),
+) -> JobLogsResponse:
     job = resolve_job(live_cache, job_id)
     if job is None:
         raise _JOB_NOT_FOUND
     try:
         sync = live_cache.sync_meta()
-        text = await fetch_logs_for_job(job, cluster_epoch=sync.cluster_epoch)
-        return JobLogsResponse(job_id=job_id, logs=text, sync=sync)
+        full_text = await fetch_logs_for_job(job, cluster_epoch=sync.cluster_epoch)
+        sliced = slice_job_logs(
+            full_text,
+            tail_lines=tail_lines if after_offset is None else None,
+            after_offset=after_offset,
+        )
+        return JobLogsResponse(
+            job_id=job_id,
+            logs=sliced.text,
+            content_offset=sliced.content_offset,
+            content_length=sliced.content_length,
+            sync=sync,
+        )
     except Exception as exc:
         return JobLogsResponse(
             job_id=job_id,

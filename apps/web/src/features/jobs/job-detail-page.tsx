@@ -4,14 +4,8 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { TaskDrawer } from "@/features/jobs/task-drawer";
 import { TaskTree } from "@/features/jobs/task-tree";
-import {
-  fetchJob,
-  fetchJobLogs,
-  fetchJobTasks,
-  fetchTask,
-  stopJob,
-  triggerSync,
-} from "@/shared/api/client";
+import { fetchJob, fetchJobTasks, fetchTask, stopJob, triggerSync } from "@/shared/api/client";
+import { useJobLogs } from "@/shared/hooks/use-job-logs";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { Button } from "@/shared/ui/primitives";
 import { LogViewer } from "@/shared/ui/log-viewer";
@@ -31,7 +25,15 @@ export function JobDetailPage() {
   const [stopConfirm, setStopConfirm] = useState(false);
   const [logsPaused, setLogsPaused] = useState(false);
   const queryClient = useQueryClient();
-  const { connected } = useLiveSync(jobId);
+  const {
+    text: logText,
+    errorMessage: logError,
+    loading: logsLoading,
+    fetching: logsFetching,
+    refresh: refreshLogs,
+    tailFromSync,
+  } = useJobLogs(jobId, { paused: logsPaused, pollMs: 5000 });
+  const { connected } = useLiveSync(jobId, { onSync: tailFromSync });
 
   const jobQuery = useQuery({
     queryKey: ["job", jobId],
@@ -45,13 +47,6 @@ export function JobDetailPage() {
     queryFn: () => fetchJobTasks(jobId),
     enabled: Boolean(jobId),
     refetchInterval: connected ? false : 5000,
-  });
-
-  const logsQuery = useQuery({
-    queryKey: ["job-logs", jobId],
-    queryFn: () => fetchJobLogs(jobId),
-    enabled: Boolean(jobId),
-    refetchInterval: logsPaused || connected ? false : 5000,
   });
 
   const taskQuery = useQuery({
@@ -186,16 +181,17 @@ export function JobDetailPage() {
 
       <section className="panel">
         <h2>{selectedTaskId ? "Task logs (filtered)" : "Job logs"}</h2>
-        {logsQuery.isLoading ? (
+        {logsLoading ? (
           <p className="muted">Loading logs…</p>
         ) : (
           <LogViewer
-            text={filterLogsForTask(logsQuery.data?.logs ?? "", selectedTaskId)}
-            errorMessage={logsQuery.data?.error_message}
+            text={filterLogsForTask(logText, selectedTaskId)}
+            errorMessage={logError}
             pollPaused={logsPaused}
+            followTail={!logsPaused}
             onTogglePause={() => setLogsPaused((p) => !p)}
-            onRefresh={() => logsQuery.refetch()}
-            isRefreshing={logsQuery.isFetching}
+            onRefresh={() => refreshLogs()}
+            isRefreshing={logsFetching}
           />
         )}
       </section>

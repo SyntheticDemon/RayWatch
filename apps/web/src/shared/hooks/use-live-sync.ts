@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { JobResponse, SyncMeta } from "@/shared/api/client";
 
@@ -9,9 +9,15 @@ type LiveSyncMessage = {
   job?: JobResponse["job"];
 };
 
-export function useLiveSync(jobId?: string) {
+type UseLiveSyncOptions = {
+  onSync?: () => void;
+};
+
+export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
   const queryClient = useQueryClient();
   const [connected, setConnected] = useState(false);
+  const onSyncRef = useRef(options?.onSync);
+  onSyncRef.current = options?.onSync;
 
   useEffect(() => {
     const path = jobId ? `/ws/live?job_id=${encodeURIComponent(jobId)}` : "/ws/live";
@@ -36,6 +42,7 @@ export function useLiveSync(jobId?: string) {
         }
 
         if (message?.type === "sync") {
+          onSyncRef.current?.();
           if (!jobId) {
             queryClient.invalidateQueries({ queryKey: ["jobs"] });
           } else if (message.job) {
@@ -45,11 +52,9 @@ export function useLiveSync(jobId?: string) {
               return { job: message.job!, sync };
             });
             queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
-            queryClient.invalidateQueries({ queryKey: ["job-logs", jobId] });
           } else {
             queryClient.invalidateQueries({ queryKey: ["job", jobId] });
             queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
-            queryClient.invalidateQueries({ queryKey: ["job-logs", jobId] });
           }
           return;
         }
@@ -57,7 +62,6 @@ export function useLiveSync(jobId?: string) {
         queryClient.invalidateQueries({ queryKey: jobId ? ["job", jobId] : ["jobs"] });
         if (jobId) {
           queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
-          queryClient.invalidateQueries({ queryKey: ["job-logs", jobId] });
         }
       };
     };

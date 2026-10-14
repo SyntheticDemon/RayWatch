@@ -67,7 +67,14 @@ export type JobLogsResponse = {
   job_id: string;
   logs: string;
   error_message: string | null;
+  content_offset: number;
+  content_length: number;
   sync: SyncMeta;
+};
+
+export type JobLogsQuery = {
+  tail_lines?: number;
+  after_offset?: number;
 };
 
 export type StopJobResponse = {
@@ -167,8 +174,8 @@ export function fetchTask(taskId: string): Promise<TaskResponse> {
   return fetchJson<TaskResponse>(`/tasks/${taskId}`);
 }
 
-export function fetchJobLogs(jobId: string): Promise<JobLogsResponse> {
-  return fetchJson<JobLogsResponse>(`/jobs/${jobId}/logs`);
+export function fetchJobLogs(jobId: string, query: JobLogsQuery = {}): Promise<JobLogsResponse> {
+  return fetchJson<JobLogsResponse>(`/jobs/${jobId}/logs${qs(query)}`);
 }
 
 export function stopJob(jobId: string): Promise<StopJobResponse> {

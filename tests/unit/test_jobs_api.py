@@ -30,6 +30,29 @@ async def test_job_logs_fixture_mode(api_client: AsyncClient) -> None:
     body = response.json()
     assert body.get("error_message") in (None, "")
     assert "train.py" in body["logs"]
+    assert body["content_length"] == len(body["logs"])
+    assert body["content_offset"] == 0
+
+
+@pytest.mark.asyncio
+async def test_job_logs_tail_and_incremental(api_client: AsyncClient) -> None:
+    full = await api_client.get("/jobs/01000000/logs")
+    assert full.status_code == 200
+    full_body = full.json()
+    full_text = full_body["logs"]
+    tail = await api_client.get("/jobs/01000000/logs", params={"tail_lines": 1})
+    assert tail.status_code == 200
+    tail_body = tail.json()
+    assert tail_body["logs"] in full_text
+    assert tail_body["content_length"] == len(full_text)
+    assert tail_body["content_offset"] > 0
+
+    offset = len(full_text) - 3
+    delta = await api_client.get("/jobs/01000000/logs", params={"after_offset": offset})
+    assert delta.status_code == 200
+    delta_body = delta.json()
+    assert delta_body["logs"] == full_text[offset:]
+    assert delta_body["content_offset"] == offset
 
 
 @pytest.mark.asyncio
