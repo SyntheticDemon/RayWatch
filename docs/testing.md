@@ -63,9 +63,16 @@ CI job: start **Ray head** in a container (pinned image matching `SUPPORTED_RAY_
 
 | Spec | Covers |
 |------|--------|
-| `jobs-hub.spec.ts` | Jobs list, job detail header |
-| `job-detail.spec.ts` | Fixture logs toolbar, stop job (fixture) |
-| `cluster.spec.ts` | Nodes/actors from fixture sync |
+| `jobs-hub.spec.ts` | Jobs list smoke |
+| `jobs-hub-workflow.spec.ts` | Search URL state, job kind, time presets, row → detail |
+| `job-detail.spec.ts` | Breadcrumbs, logs toolbar, nested runs heading, stop job |
+| `nested-runs.spec.ts` | Task tree expand/select, internal runs page, child tasks on `/tasks/:id` |
+| `task-detail.spec.ts` | Standalone task page + job context link |
+| `navigation.spec.ts` | Header nav across Jobs / Actors / Cluster / Internal runs |
+| `cluster.spec.ts` | Cluster summary, nodes, objects; actors tab |
+| `command-palette.spec.ts` | ⌘K navigation to actors and internal runs |
+| `use-jobs-hub-filters.test.ts` | Submission vs internal id heuristics (Vitest) |
+| `test_internal_job_workflow.py` | API `job_kind=internal` + nested task parent links |
 
 **Live Ray (agent/CI):** `make verify-live` — `ray-up`, `demo-ray`, live API on `:18081`, sync retries until a job has indexed tasks (paginated job list), logs + tasks curl, integration pytest, and warm assert at scales 10/25 (`VERIFY_LIVE_BENCHMARK=0` to skip; `VERIFY_LIVE_REQUIRE_TASKS=0` to allow zero tasks).
 

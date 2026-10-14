@@ -100,8 +100,8 @@ async def test_freshness_includes_task_count(
     response = await api_client.get("/freshness")
     assert response.status_code == 200
     body = response.json()
-    assert body["task_count"] == 2
-    assert body["job_count"] == 2
+    assert body["task_count"] == 4
+    assert body["job_count"] == 3
     assert "sync" in body
 
 

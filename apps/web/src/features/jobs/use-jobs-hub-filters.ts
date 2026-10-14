@@ -30,7 +30,7 @@ function presetRange(preset: TimePreset): { after: string; before: string } {
   return { after, before };
 }
 
-function isSubmissionJob(jobId: string): boolean {
+export function isSubmissionJob(jobId: string): boolean {
   return jobId.startsWith("raysubmit_") || /^[0-9a-f]{8}$/i.test(jobId);
 }
 

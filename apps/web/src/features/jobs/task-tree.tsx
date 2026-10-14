@@ -68,6 +68,7 @@ function TreeRow({
               type="button"
               className="tree-toggle"
               aria-expanded={isOpen}
+              aria-label={`${isOpen ? "Collapse" : "Expand"} ${task.name || task.func_or_class || "task"} nested tasks`}
               onClick={(e) => {
                 e.stopPropagation();
                 onToggle(task.task_id);

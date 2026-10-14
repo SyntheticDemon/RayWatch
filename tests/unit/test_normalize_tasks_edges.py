@@ -33,9 +33,12 @@ def test_normalize_tasks_2_59_fixture_attempt_and_error() -> None:
 
     fixture = Path(__file__).resolve().parents[1] / "fixtures" / "ray" / "tasks_list_2_59.json"
     payload = json.loads(fixture.read_text(encoding="utf-8"))
-    assert task_total_from_payload(payload) == 2
-    batch = normalize_tasks_payload(payload, {"01000000": "01000000"})
-    assert len(batch.ops) == 2
+    assert task_total_from_payload(payload) == 4
+    batch = normalize_tasks_payload(
+        payload,
+        {"01000000": "01000000", "ray_driver_nested_demo": "ray_driver_nested_demo"},
+    )
+    assert len(batch.ops) == 4
     running = batch.ops[0].task
     failed = batch.ops[1].task
     assert running is not None and failed is not None

@@ -3,7 +3,7 @@
   "msg": "",
   "data": {
     "result": {
-      "total": 2,
+      "total": 4,
       "result": [
         {
           "task_id": "aaaabbbbccccddddeeeeeeeeffffffffffffffff02000000",
@@ -27,6 +27,28 @@
           "worker_id": "worker-2",
           "actor_id": null,
           "error_type": "WorkerCrashed"
+        },
+        {
+          "task_id": "ccccddddeeeeffffaaaabbbbccccdddd11111111",
+          "attempt_number": 0,
+          "name": "driver_root",
+          "state": "RUNNING",
+          "job_id": "ray_driver_nested_demo",
+          "func_or_class_name": "driver_root",
+          "parent_task_id": null,
+          "worker_id": "worker-1",
+          "actor_id": null
+        },
+        {
+          "task_id": "ddddeeeeffffaaaabbbbccccddddeeee22222222",
+          "attempt_number": 0,
+          "name": "driver_child",
+          "state": "RUNNING",
+          "job_id": "ray_driver_nested_demo",
+          "func_or_class_name": "driver_child",
+          "parent_task_id": "ccccddddeeeeffffaaaabbbbccccdddd11111111",
+          "worker_id": "worker-1",
+          "actor_id": null
         }
       ]
     }

@@ -26,6 +26,20 @@
         "FAILED": 0,
         "total": 3
       }
+    },
+    "ray_driver_nested_demo": {
+      "submission_id": "ray_driver_nested_demo",
+      "entrypoint": "ray.internal.driver",
+      "status": "RUNNING",
+      "start_time": 1710001000.0,
+      "task_stats": {
+        "RUNNING": 2,
+        "FAILED": 0,
+        "total": 4
+      },
+      "metadata": {
+        "ray_internal_job_id": "deadbeef"
+      }
     }
   },
   "msg": "Got all job info."

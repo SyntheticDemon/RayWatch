@@ -13,7 +13,7 @@ async def test_sync_loads_jobs_and_tasks_fixtures(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setenv("RAYWATCH_FIXTURE_JOBS", str(FIXTURE_JOBS))
     monkeypatch.setenv("RAYWATCH_FIXTURE_TASKS", str(FIXTURE_TASKS))
     await sync_active_jobs(live_cache)
-    assert live_cache.job_count() == 2
-    assert live_cache.task_count() == 2
+    assert live_cache.job_count() == 3
+    assert live_cache.task_count() == 4
     items, _ = live_cache.list_tasks_for_job("01000000", cursor=None, limit=10)
     assert len(items) == 2
