@@ -11,6 +11,8 @@ export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
   const onJobs = location.pathname === "/" || location.pathname.startsWith("/jobs");
   const onCluster = location.pathname.startsWith("/cluster");
+  const onActors = location.pathname.startsWith("/actors");
+  const onInternal = location.pathname.startsWith("/internal-runs");
 
   return (
     <div className="app-shell">
@@ -24,8 +26,14 @@ export function AppShell({ children }: AppShellProps) {
               <Link to="/" className={`app-nav-link ${onJobs ? "active" : ""}`}>
                 Jobs
               </Link>
+              <Link to="/actors" className={`app-nav-link ${onActors ? "active" : ""}`}>
+                Actors
+              </Link>
               <Link to="/cluster" className={`app-nav-link ${onCluster ? "active" : ""}`}>
                 Cluster
+              </Link>
+              <Link to="/internal-runs" className={`app-nav-link ${onInternal ? "active" : ""}`}>
+                Internal runs
               </Link>
             </nav>
           </div>

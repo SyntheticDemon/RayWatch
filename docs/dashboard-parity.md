@@ -26,12 +26,12 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Job list (status, id, entrypoint, timing) | `GET /jobs` + jobs table | **done** | Cursor pagination, filters, `include_archived` |
+| Job list (status, id, entrypoint, timing) | `GET /jobs` + jobs table | **done** | Cursor pagination; URL-persisted search; **1h / 24h / 7d** time presets; per-column filters; submission vs internal kind |
 | Job detail / status | `GET /jobs/{id}` | **done** | Sync honesty fields |
 | Stop / terminate job | `POST /jobs/{id}/stop` | **done** | Best-effort Ray HTTP |
 | Submit job from UI | — | **n/a** | Ops view; use Ray CLI/SDK |
-| Driver logs (job) | `GET /jobs/{id}/logs` + LogViewer | **close** | Incremental tail, WS-triggered tail, filters, download, `?log_line=` links |
-| Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **close** | Cursor pagination + “Load more”; WS `tasks_preview` patches rows |
+| Driver logs (job) | `GET /jobs/{id}/logs` + LogViewer | **close** | UI tails ~400 lines then `after_offset` poll; short server log-body cache on poll; WS-triggered tail; filters; `?log_line=` links |
+| Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **close** | **Nested runs** on job detail; `/internal-runs` hub; cursor + “Load more”; WS `tasks_preview` |
 
 ### Tasks & entities
 
@@ -39,7 +39,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 |--------------------------|----------|--------|-------|
 | Task detail | `GET /tasks/{id}` + task drawer/page | **partial** | Shared `TaskInspector` + attempt timeline |
 | Worker / node drill-down | Worker card + actor card + cluster links | **partial** | Actor → node one-hop from live index |
-| Actors, objects, global state browser | `GET /cluster/actors` + `GET /cluster/objects` + search | **partial** | Indexed object table (Ray cap); not full lineage browser |
+| Actors, objects, global state browser | `GET /cluster/actors` + **`/actors`** + objects on `/cluster` | **close** | Dedicated **Actors** nav tab; objects on cluster; palette links; not full lineage browser |
 | Metrics / charts / GPU views | Utilization bars + sync-history sparklines | **close** | Recent trend (~4 min); not full Grafana |
 
 ### Live & freshness
@@ -63,7 +63,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **partial** | Totals + utilization bars + node/actor/object tables |
+| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **close** | Totals + utilization bars + sparklines; nodes + objects tables (actors moved to `/actors`) |
 | Serve / Train dashboards | — | **n/a** | Separate products |
 
 ## API coverage map (tests)

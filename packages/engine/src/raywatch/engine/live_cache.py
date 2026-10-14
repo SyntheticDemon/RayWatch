@@ -4,6 +4,7 @@ import bisect
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
+from raywatch.engine.job_kind import job_id_matches_kind
 from raywatch.model.cluster import (
     ActorSummary,
     ClusterOverview,
@@ -222,6 +223,7 @@ class LiveCache:
         started_after: datetime | None = None,
         started_before: datetime | None = None,
         failed_within_hours: float | None = None,
+        job_kind: str | None = None,
     ) -> tuple[list[JobSummary], str | None]:
         limit = min(max(limit, 1), 100)
         has_filters = (
@@ -229,6 +231,7 @@ class LiveCache:
             or started_after is not None
             or started_before is not None
             or failed_within_hours is not None
+            or job_kind is not None
             or (q is not None and q.strip())
         )
         if not has_filters and sort == "job_id":
@@ -273,6 +276,8 @@ class LiveCache:
                         and needle in err.lower()
                     )
                 ]
+        if job_kind is not None:
+            job_ids = [jid for jid in job_ids if job_id_matches_kind(jid, job_kind)]
         if sort == "started_at":
             job_ids.sort(
                 key=lambda jid: self._state.jobs[jid].started_at or _utc_now(),

@@ -536,6 +536,23 @@ a:hover {
   padding: 0 1.25rem;
 }
 
+.data-table-col-filters {
+  display: grid;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 1.25rem 0.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.data-table-col-filters input,
+.data-table-col-filters select {
+  width: 100%;
+  min-width: 0;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
+}
+
 .data-table-header {
   position: sticky;
   top: 0;

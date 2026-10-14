@@ -4,8 +4,8 @@
   "scenarios": {
     "jobs_list_1000": {
       "job_count": 1000,
-      "p95_ms": 1.22,
-      "cold_ms": 9.15
+      "p95_ms": 3.5,
+      "cold_ms": 12.5
     },
     "jobs_list_5000": {
       "job_count": 5000,

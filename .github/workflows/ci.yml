@@ -26,6 +26,12 @@ jobs:
         working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install Python deps (fixture API for e2e)
+        run: uv sync --all-packages
+        working-directory: .
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

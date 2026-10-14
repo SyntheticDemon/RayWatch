@@ -170,7 +170,7 @@ export function JobDetailPage() {
       </dl>
 
       <section className="panel">
-        <h2>Tasks</h2>
+        <h2>Nested runs</h2>
         {tasksQuery.isLoading ? (
           <p className="muted">Loading tasks…</p>
         ) : (
@@ -202,6 +202,9 @@ export function JobDetailPage() {
 
       <section className="panel">
         <h2>{selectedTaskId ? "Task logs (filtered)" : "Job logs"}</h2>
+        <p className="muted" style={{ marginTop: "-0.25rem", marginBottom: "0.75rem" }}>
+          Tails the latest lines first, then polls for new content (no full-file download in the UI).
+        </p>
         {logsLoading ? (
           <p className="muted">Loading logs…</p>
         ) : (

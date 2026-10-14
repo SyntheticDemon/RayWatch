@@ -193,6 +193,7 @@ export type JobsQuery = {
   started_after?: string;
   started_before?: string;
   include_archived?: boolean;
+  job_kind?: "submission" | "internal";
 };
 
 export type SyncTriggerResponse = {

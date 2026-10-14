@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import {
-  fetchClusterActors,
   fetchClusterNodes,
   fetchClusterObjects,
   fetchClusterOverview,
@@ -35,11 +34,6 @@ export function ClusterPage() {
     return (nodeId: string) => nodeId === focusId;
   }, [focusKind, focusId]);
 
-  const actorMatchesFocus = useMemo(() => {
-    if (focusKind !== "actor" || !focusId) return () => false;
-    return (actorId: string) => actorId === focusId;
-  }, [focusKind, focusId]);
-
   const objectMatchesFocus = useMemo(() => {
     if (focusKind !== "object" || !focusId) return () => false;
     return (objectId: string) => objectId === focusId;
@@ -54,12 +48,6 @@ export function ClusterPage() {
   const nodesQuery = useQuery({
     queryKey: ["cluster-nodes"],
     queryFn: fetchClusterNodes,
-    refetchInterval: connected ? false : 8000,
-  });
-
-  const actorsQuery = useQuery({
-    queryKey: ["cluster-actors"],
-    queryFn: () => fetchClusterActors(200),
     refetchInterval: connected ? false : 8000,
   });
 
@@ -80,20 +68,15 @@ export function ClusterPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cluster-overview"] });
       queryClient.invalidateQueries({ queryKey: ["cluster-nodes"] });
-      queryClient.invalidateQueries({ queryKey: ["cluster-actors"] });
       queryClient.invalidateQueries({ queryKey: ["cluster-objects"] });
     },
   });
 
   useEffect(() => {
     highlightRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [focusId, focusKind, nodesQuery.data, actorsQuery.data, objectsQuery.data]);
+  }, [focusId, focusKind, nodesQuery.data, objectsQuery.data]);
 
-  const sync =
-    overviewQuery.data?.sync ??
-    nodesQuery.data?.sync ??
-    actorsQuery.data?.sync ??
-    objectsQuery.data?.sync;
+  const sync = overviewQuery.data?.sync ?? nodesQuery.data?.sync ?? objectsQuery.data?.sync;
   const overview = overviewQuery.data?.overview;
 
   return (
@@ -102,7 +85,10 @@ export function ClusterPage() {
       <header className="page-title-row">
         <div>
           <h1 className="page-title">Cluster</h1>
-          <p className="page-subtitle">Nodes, actors, and resource totals from the latest Ray sync</p>
+          <p className="page-subtitle">
+            Nodes, objects, and resource totals ·{" "}
+            <Link to="/actors" className="text-link">Actors tab</Link>
+          </p>
         </div>
         <div className="page-title-actions">
           <SyncStatus sync={sync} connected={connected} />
@@ -207,47 +193,6 @@ export function ClusterPage() {
                     <td>{node.gpu_total ?? "—"}</td>
                     <td>{formatGiB(node.memory_bytes_total ?? 0)}</td>
                     <td>{node.is_head ? "Yes" : "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-
-        <section className="table-card">
-          <header className="table-card-header">
-            <h2>Actors</h2>
-            <span className="table-card-count">{actorsQuery.data?.items.length ?? "—"}</span>
-          </header>
-          {actorsQuery.isLoading ? (
-            <p className="table-card-loading">Loading actors…</p>
-          ) : actorsQuery.error ? (
-            <p className="error-banner">Could not load actors.</p>
-          ) : (
-            <table className="simple-table">
-              <thead>
-                <tr>
-                  <th>Actor ID</th>
-                  <th>Class</th>
-                  <th>State</th>
-                  <th>Job</th>
-                </tr>
-              </thead>
-              <tbody>
-                {actorsQuery.data?.items.map((actor) => (
-                  <tr
-                    key={actor.actor_id}
-                    ref={actorMatchesFocus(actor.actor_id) ? highlightRef : undefined}
-                    className={actorMatchesFocus(actor.actor_id) ? "row-highlight" : undefined}
-                  >
-                    <td className="mono cell-ellipsis" title={actor.actor_id}>
-                      {actor.actor_id}
-                    </td>
-                    <td>{actor.class_name ?? "—"}</td>
-                    <td>
-                      <span className="badge badge-running">{actor.state ?? "—"}</span>
-                    </td>
-                    <td className="mono">{actor.job_id ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

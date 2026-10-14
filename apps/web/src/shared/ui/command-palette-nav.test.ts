@@ -12,7 +12,7 @@ describe("pathForSearchHit", () => {
         job_id: "j1",
         status: "ALIVE",
       }),
-    ).toBe("/cluster?focus=actor&id=abc");
+    ).toBe("/actors?id=abc");
     expect(
       pathForSearchHit({ kind: "node", id: "n1", label: "host", job_id: null, status: "ALIVE" }),
     ).toBe(
