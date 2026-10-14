@@ -63,7 +63,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Cluster status, nodes, resources | — | **gap** | Future collector scope |
+| Cluster status, nodes, resources | `/cluster` + `GET /cluster/nodes` | **partial** | Read-only nodes/actors; no resource charts |
 | Serve / Train dashboards | — | **n/a** | Separate products |
 
 ## API coverage map (tests)

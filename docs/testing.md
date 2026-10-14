@@ -59,7 +59,7 @@ CI job: start **Ray head** in a container (pinned image matching `SUPPORTED_RAY_
 
 ## 4. End-to-end (optional CI nightly or pre-release)
 
-**Playwright** (`apps/web/e2e/`, `make test-e2e`): starts fixture API + `vite preview` automatically (see `playwright.config.ts`). No browser manual steps.
+**Playwright** (`apps/web/e2e/`, `make test-e2e`): `make install-e2e` downloads Chromium if missing; then starts fixture API + `vite preview` automatically (see `playwright.config.ts`). CI runs `npx playwright install chromium --with-deps` before e2e.
 
 | Spec | Covers |
 |------|--------|

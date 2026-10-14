@@ -172,6 +172,16 @@ class LiveCache:
         failed_within_hours: float | None = None,
     ) -> tuple[list[JobSummary], str | None]:
         limit = min(max(limit, 1), 100)
+        has_filters = (
+            status is not None
+            or started_after is not None
+            or started_before is not None
+            or failed_within_hours is not None
+            or (q is not None and q.strip())
+        )
+        if not has_filters and sort == "job_id":
+            return self._list_jobs_by_sorted_ids(self._state.job_ids_sorted, cursor, limit)
+
         job_ids = list(self._state.job_ids_sorted)
         if status is not None:
             job_ids = [jid for jid in job_ids if self._state.jobs[jid].status == status]
@@ -220,6 +230,14 @@ class LiveCache:
             job_ids.sort(key=lambda jid: self._state.jobs[jid].status.value)
         else:
             job_ids.sort()
+        return self._list_jobs_by_sorted_ids(job_ids, cursor, limit)
+
+    def _list_jobs_by_sorted_ids(
+        self,
+        job_ids: list[str],
+        cursor: str | None,
+        limit: int,
+    ) -> tuple[list[JobSummary], str | None]:
         start = 0
         if cursor:
             idx = bisect.bisect_left(job_ids, cursor)
@@ -228,7 +246,7 @@ class LiveCache:
             elif idx < len(job_ids):
                 start = idx
         slice_ids = job_ids[start : start + limit]
-        items = [JobSummary(**self._state.jobs[jid].model_dump()) for jid in slice_ids]
+        items = [JobSummary.model_validate(self._state.jobs[jid]) for jid in slice_ids]
         has_more = len(slice_ids) == limit and start + limit < len(job_ids)
         next_cursor = slice_ids[-1] if has_more else None
         return items, next_cursor

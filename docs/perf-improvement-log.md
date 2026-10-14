@@ -32,3 +32,19 @@ One section per optimization **layer**. Always record commands run and outcomes.
 **Note:** Step 1 code landed with Step 0; re-run `make perf` after the next layer to see a delta vs `tests/perf/baselines.json`.
 
 **Next layer candidates:** task list index, ingest batch sizing, Ray comparison at safe scales only.
+
+---
+
+## Step 2 — Default `GET /jobs` fast path in `LiveCache`
+
+**Change:** When there are no filters and `sort=job_id`, paginate `job_ids_sorted` in place (no full-id copy or redundant sort). Build rows with `JobSummary.model_validate` instead of `model_dump` round-trip.
+
+**Commands:** `make test`, `make perf`, `make perf-baseline` (refreshed `tests/perf/baselines.json`).
+
+**Read-path gate p95 (ms) after Step 2:**
+
+| scenario | jobs | gate p95 (ms) |
+| --- | ---: | ---: |
+| jobs_list_1000 | 1000 | ~1.9 |
+| jobs_list_5000 | 5000 | ~1.9 |
+| jobs_list_10000 | 10000 | ~1.8 |

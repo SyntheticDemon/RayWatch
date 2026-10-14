@@ -4,23 +4,23 @@
   "scenarios": {
     "jobs_list_1000": {
       "job_count": 1000,
-      "p95_ms": 2.39,
-      "cold_ms": 7.48
+      "p95_ms": 1.92,
+      "cold_ms": 8.85
     },
     "jobs_list_5000": {
       "job_count": 5000,
-      "p95_ms": 1.38,
-      "cold_ms": 1.72
+      "p95_ms": 1.9,
+      "cold_ms": 1.81
     },
     "jobs_list_10000": {
       "job_count": 10000,
-      "p95_ms": 1.59,
-      "cold_ms": 1.93
+      "p95_ms": 1.81,
+      "cold_ms": 1.53
     },
     "job_get_5000": {
       "job_count": 5000,
-      "p95_ms": 1.44,
-      "cold_ms": 1.44
+      "p95_ms": 1.54,
+      "cold_ms": 1.74
     }
   }
 }

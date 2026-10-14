@@ -1,7 +1,14 @@
-.PHONY: help install test coverage lint fmt typecheck integration dev-api ray-up ray-down test-integration-ray ray-smoke benchmark benchmark-ray perf perf-baseline demo-ray test-e2e verify-live
+.PHONY: help install test coverage lint fmt typecheck integration dev-api ray-up ray-down test-integration-ray ray-smoke benchmark benchmark-ray perf perf-baseline demo-ray install-e2e test-e2e verify-live test-all
 
-test-e2e:
+test-e2e: install-e2e
 	cd apps/web && npm run test:e2e
+
+install-e2e:
+	cd apps/web && npx playwright install chromium
+
+test-all: test lint typecheck
+	cd apps/web && npm run test
+	$(MAKE) test-e2e
 
 verify-live:
 	bash scripts/verify_live_stack.sh
