@@ -23,6 +23,7 @@ export function useLiveSync(jobId?: string) {
         queryClient.invalidateQueries({ queryKey: jobId ? ["job", jobId] : ["jobs"] });
         if (jobId) {
           queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
+          queryClient.invalidateQueries({ queryKey: ["job-logs", jobId] });
         }
       };
     };

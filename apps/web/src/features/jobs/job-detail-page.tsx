@@ -194,6 +194,8 @@ export function JobDetailPage() {
             errorMessage={logsQuery.data?.error_message}
             pollPaused={logsPaused}
             onTogglePause={() => setLogsPaused((p) => !p)}
+            onRefresh={() => logsQuery.refetch()}
+            isRefreshing={logsQuery.isFetching}
           />
         )}
       </section>

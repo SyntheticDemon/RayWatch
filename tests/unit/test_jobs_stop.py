@@ -3,6 +3,8 @@
 import pytest
 from httpx import AsyncClient
 
+from raywatch.api.state import live_cache
+
 
 @pytest.mark.asyncio
 async def test_stop_unknown_job_returns_404(api_client: AsyncClient) -> None:
@@ -12,9 +14,21 @@ async def test_stop_unknown_job_returns_404(api_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_stop_job_attempts_ray_call(
+async def test_stop_fixture_job_without_ray_call(api_client: AsyncClient) -> None:
+    response = await api_client.post("/jobs/01000000/stop")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["accepted"] is True
+    assert "fixture" in body["message"].lower()
+    job = await api_client.get("/jobs/01000000")
+    assert job.json()["job"]["status"] == "STOPPED"
+
+
+@pytest.mark.asyncio
+async def test_stop_live_job_attempts_ray_call(
     api_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    live_cache._state.cluster_epoch = "live"
     calls: list[str] = []
 
     async def fake_stop(_client: object, job_id: str) -> None:
@@ -29,9 +43,11 @@ async def test_stop_job_attempts_ray_call(
 
 
 @pytest.mark.asyncio
-async def test_stop_job_surfaces_ray_failure(
+async def test_stop_live_job_surfaces_ray_failure(
     api_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    live_cache._state.cluster_epoch = "live"
+
     async def fail_stop(_client: object, _job_id: str) -> None:
         raise RuntimeError("ray refused")
 

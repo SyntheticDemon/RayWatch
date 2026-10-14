@@ -14,7 +14,8 @@ from raywatch.model.api_dto import (
     StopJobResponse,
     TasksPage,
 )
-from raywatch.model.job import JobStatus
+from raywatch.model.ingest import IngestBatch, IngestOp
+from raywatch.model.job import JobDetail, JobStatus
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -104,8 +105,24 @@ async def get_job_logs(job_id: str) -> JobLogsResponse:
 
 @router.post("/{job_id}/stop", response_model=StopJobResponse)
 async def stop_job(job_id: str) -> StopJobResponse:
-    if resolve_job(live_cache, job_id) is None:
+    job = resolve_job(live_cache, job_id)
+    if job is None:
         raise _JOB_NOT_FOUND
+    sync = live_cache.sync_meta()
+    if sync.cluster_epoch == "fixture":
+        stopped = job.model_copy(update={"status": JobStatus.STOPPED})
+        live_cache.apply_ingest_batch(
+            IngestBatch(
+                ops=[IngestOp(kind="upsert_job", job=stopped)],
+                cluster_epoch=sync.cluster_epoch,
+            )
+        )
+        return StopJobResponse(
+            job_id=job_id,
+            accepted=True,
+            message="Job marked STOPPED (fixture dev — no Ray call).",
+            sync=live_cache.sync_meta(),
+        )
     try:
         async with httpx.AsyncClient() as client:
             await request_stop_job(client, job_id)
