@@ -24,6 +24,15 @@ async def test_get_job_detail(api_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_job_logs_fixture_mode(api_client: AsyncClient) -> None:
+    response = await api_client.get("/jobs/01000000/logs")
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("error_message") in (None, "")
+    assert "train.py" in body["logs"]
+
+
+@pytest.mark.asyncio
 async def test_freshness_endpoint(api_client: AsyncClient) -> None:
     response = await api_client.get("/freshness")
     assert response.status_code == 200

@@ -2,7 +2,8 @@ from datetime import datetime
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query
-from raywatch.adapter_ray.ray_client import fetch_job_logs_text, request_stop_job
+from raywatch.adapter_ray.job_logs import fetch_logs_for_job
+from raywatch.adapter_ray.ray_client import request_stop_job
 from raywatch.api.state import live_cache
 from raywatch.engine.job_list import list_jobs as list_jobs_merged
 from raywatch.engine.sync_side_effects import job_snapshot_store, resolve_job
@@ -85,12 +86,13 @@ def list_job_tasks(
 
 @router.get("/{job_id}/logs", response_model=JobLogsResponse)
 async def get_job_logs(job_id: str) -> JobLogsResponse:
-    if resolve_job(live_cache, job_id) is None:
+    job = resolve_job(live_cache, job_id)
+    if job is None:
         raise _JOB_NOT_FOUND
     try:
-        async with httpx.AsyncClient() as client:
-            text = await fetch_job_logs_text(client, job_id)
-        return JobLogsResponse(job_id=job_id, logs=text, sync=live_cache.sync_meta())
+        sync = live_cache.sync_meta()
+        text = await fetch_logs_for_job(job, cluster_epoch=sync.cluster_epoch)
+        return JobLogsResponse(job_id=job_id, logs=text, sync=sync)
     except Exception as exc:
         return JobLogsResponse(
             job_id=job_id,

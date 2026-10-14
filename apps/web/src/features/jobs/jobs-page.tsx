@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { VirtualizedJobsTable } from "@/features/jobs/virtualized-jobs-table";
 import { fetchJobs, triggerSync, type JobSummary } from "@/shared/api/client";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
-import { SyncBanner } from "@/shared/ui/sync-banner";
+import { Button, Checkbox, Field, Input, SearchField, Select } from "@/shared/ui/primitives";
+import { SyncStatus } from "@/shared/ui/sync-status";
 
 const STATUS_CHIPS = ["", "RUNNING", "FAILED", "SUCCEEDED"] as const;
 
@@ -51,7 +52,7 @@ export function JobsPage() {
   useEffect(() => {
     setCursor(undefined);
     setRows([]);
-  }, [status, q, sort, failed24h, startedAfter, startedBefore]);
+  }, [status, q, sort, failed24h, startedAfter, startedBefore, includeArchived]);
 
   useEffect(() => {
     if (!data) return;
@@ -81,111 +82,118 @@ export function JobsPage() {
   };
 
   if (isLoading && rows.length === 0) {
-    return <p className="muted">Loading jobs…</p>;
+    return (
+      <div className="page-loading">
+        <div className="spinner" aria-hidden />
+        <p>Loading jobs…</p>
+      </div>
+    );
   }
   if (error) {
-    return <p className="error">Could not load jobs. Is the API running?</p>;
+    return <p className="error-banner">Could not load jobs. Is the API running on port 8080?</p>;
   }
 
   return (
     <main className="jobs-page">
-      <header className="page-header">
-        <h1>Jobs</h1>
-        <div className="header-actions">
-          <span className="ws-indicator" data-connected={connected}>
-            {connected ? "Live" : "Polling"}
-          </span>
-          <button
-            type="button"
-            className="btn-secondary"
+      <header className="page-title-row">
+        <div>
+          <h1 className="page-title">Jobs</h1>
+          <p className="page-subtitle">Ray cluster workloads · cursor-paginated from the API</p>
+        </div>
+        <div className="page-title-actions">
+          <SyncStatus sync={data?.sync} connected={connected} />
+          <Button
+            variant="primary"
+            size="sm"
             disabled={syncMutation.isPending}
             onClick={() => syncMutation.mutate()}
           >
-            Sync Ray
-          </button>
+            {syncMutation.isPending ? "Syncing…" : "Sync from Ray"}
+          </Button>
         </div>
       </header>
-      <SyncBanner sync={data?.sync} />
-      <div className="jobs-toolbar">
-        <input
-          className="search-input"
-          placeholder="Search job id or entrypoint"
-          value={q}
-          onChange={(e) => resetFilters(status, e.target.value)}
-        />
-        <label className="sort-label">
-          Sort
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as typeof sort)}
-          >
-            <option value="job_id">Job ID</option>
-            <option value="started_at">Started</option>
-            <option value="status">Status</option>
-          </select>
-        </label>
-        <label className="sort-label">
-          From
-          <input
-            type="datetime-local"
-            value={startedAfter}
-            onChange={(e) => setStartedAfter(e.target.value)}
+
+      <section className="toolbar-card" aria-label="Filters">
+        <div className="toolbar-row toolbar-row-primary">
+          <SearchField
+            placeholder="Search by job ID or entrypoint…"
+            value={q}
+            onChange={(e) => resetFilters(status, e.target.value)}
+            className="toolbar-search"
+            aria-label="Search jobs"
           />
-        </label>
-        <label className="sort-label">
-          To
-          <input
-            type="datetime-local"
-            value={startedBefore}
-            onChange={(e) => setStartedBefore(e.target.value)}
-          />
-        </label>
-        <div className="chip-row">
-          {STATUS_CHIPS.map((chip) => (
-            <button
-              key={chip || "all"}
-              type="button"
-              className={`chip ${!failed24h && status === chip ? "chip-active" : ""}`}
-              onClick={() => resetFilters(chip, q)}
-            >
-              {chip || "All"}
-            </button>
-          ))}
-          <button
-            type="button"
-            className={`chip ${failed24h ? "chip-active" : ""}`}
-            onClick={() => {
-              setFailed24h(true);
-              setStatus("FAILED");
-            }}
-          >
-            Failed (24h)
-          </button>
+          <Field label="Sort by" className="toolbar-field">
+            <Select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>
+              <option value="job_id">Job ID</option>
+              <option value="started_at">Started</option>
+              <option value="status">Status</option>
+            </Select>
+          </Field>
+          <Field label="Started after" className="toolbar-field">
+            <Input
+              type="datetime-local"
+              value={startedAfter}
+              onChange={(e) => setStartedAfter(e.target.value)}
+            />
+          </Field>
+          <Field label="Started before" className="toolbar-field">
+            <Input
+              type="datetime-local"
+              value={startedBefore}
+              onChange={(e) => setStartedBefore(e.target.value)}
+            />
+          </Field>
         </div>
-        <label className="sort-label">
-          <input
-            type="checkbox"
+        <div className="toolbar-row toolbar-row-secondary">
+          <div className="segmented" role="group" aria-label="Status filter">
+            {STATUS_CHIPS.map((chip) => (
+              <button
+                key={chip || "all"}
+                type="button"
+                className={`segment ${!failed24h && status === chip ? "segment-active" : ""}`}
+                onClick={() => resetFilters(chip, q)}
+              >
+                {chip || "All"}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={`segment ${failed24h ? "segment-active" : ""}`}
+              onClick={() => {
+                setFailed24h(true);
+                setStatus("FAILED");
+              }}
+            >
+              Failed (24h)
+            </button>
+          </div>
+          <Checkbox
+            label="Include archived"
             checked={includeArchived}
-            onChange={(e) => {
-              setIncludeArchived(e.target.checked);
+            onChange={(checked) => {
+              setIncludeArchived(checked);
               setCursor(undefined);
               setRows([]);
             }}
           />
-          Include archived
-        </label>
-      </div>
-      <VirtualizedJobsTable rows={rows} />
-      {data?.next_cursor && (
-        <button
-          type="button"
-          className="btn-secondary"
-          disabled={isFetching}
-          onClick={() => setCursor(data.next_cursor!)}
-        >
-          Load more
-        </button>
-      )}
+        </div>
+      </section>
+
+      <section className="table-card">
+        <VirtualizedJobsTable rows={rows} />
+        {data?.next_cursor && (
+          <footer className="table-footer">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={isFetching}
+              onClick={() => setCursor(data.next_cursor!)}
+            >
+              {isFetching ? "Loading…" : "Load more"}
+            </Button>
+          </footer>
+        )}
+      </section>
     </main>
   );
 }

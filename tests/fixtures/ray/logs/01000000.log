@@ -1,0 +1,6 @@
+INFO driver: starting train.py
+INFO raywatch-fixture: job 01000000 is demo data (not on a live Ray cluster)
+INFO task: epoch 1/10 loss=0.42
+INFO task: epoch 2/10 loss=0.38
+WARN task: slow checkpoint write 1.2s
+INFO task: epoch 3/10 loss=0.35

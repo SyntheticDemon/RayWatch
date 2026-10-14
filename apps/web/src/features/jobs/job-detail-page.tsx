@@ -13,8 +13,9 @@ import {
   triggerSync,
 } from "@/shared/api/client";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
+import { Button } from "@/shared/ui/primitives";
 import { LogViewer } from "@/shared/ui/log-viewer";
-import { SyncBanner } from "@/shared/ui/sync-banner";
+import { SyncStatus } from "@/shared/ui/sync-status";
 
 function filterLogsForTask(logs: string, taskId: string | null): string {
   if (!taskId) return logs;
@@ -61,9 +62,12 @@ export function JobDetailPage() {
 
   const stopMutation = useMutation({
     mutationFn: () => stopJob(jobId),
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["job", jobId] });
-      setStopConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      if (result.accepted) {
+        setStopConfirm(false);
+      }
     },
   });
 
@@ -100,42 +104,52 @@ export function JobDetailPage() {
       </nav>
       <header className="job-detail-header">
         <h1>{job.job_id}</h1>
-        <div className="job-actions">
-          <button
-            type="button"
-            className="btn-secondary"
+        <div className="page-title-actions">
+          <SyncStatus sync={sync} connected={connected} compact />
+          <Button
+            variant="secondary"
+            size="sm"
             disabled={syncMutation.isPending}
             onClick={() => syncMutation.mutate()}
           >
-            Refresh from Ray
-          </button>
+            Sync from Ray
+          </Button>
           {!stopConfirm ? (
-            <button type="button" className="btn-danger" onClick={() => setStopConfirm(true)}>
+            <Button variant="danger" size="sm" onClick={() => setStopConfirm(true)}>
               Stop job
-            </button>
+            </Button>
           ) : (
             <>
-              <button
-                type="button"
-                className="btn-danger"
+              <Button
+                variant="danger"
+                size="sm"
                 disabled={stopMutation.isPending}
                 onClick={() => stopMutation.mutate()}
               >
                 Confirm stop
-              </button>
-              <button type="button" className="btn-secondary" onClick={() => setStopConfirm(false)}>
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setStopConfirm(false)}>
                 Cancel
-              </button>
+              </Button>
             </>
           )}
         </div>
       </header>
-      <SyncBanner sync={sync} />
-      <p className="ws-indicator" data-connected={connected}>
-        {connected ? "Live updates connected" : "Polling for updates"}
-      </p>
-      {stopMutation.data && (
-        <p className={stopMutation.data.accepted ? "muted" : "error"}>{stopMutation.data.message}</p>
+      {(stopMutation.data || stopMutation.isError) && (
+        <p
+          className={
+            stopMutation.isError || (stopMutation.data && !stopMutation.data.accepted)
+              ? "error-banner"
+              : "notice-banner"
+          }
+          role="status"
+        >
+          {stopMutation.isError
+            ? stopMutation.error instanceof Error
+              ? stopMutation.error.message
+              : "Stop request failed"
+            : stopMutation.data?.message}
+        </p>
       )}
       <p className="mono entrypoint">{job.entrypoint}</p>
       <dl className="meta-grid">

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 import { CommandPalette } from "@/shared/ui/command-palette";
 
@@ -7,13 +8,33 @@ type AppShellProps = {
 };
 
 export function AppShell({ children }: AppShellProps) {
+  const location = useLocation();
+  const onJobs = location.pathname === "/" || location.pathname.startsWith("/jobs");
+
   return (
-    <div className="app-shell" data-theme="dark">
+    <div className="app-shell">
       <header className="app-header">
-        <span className="app-brand">RayWatch</span>
-        <span className="muted header-hint">⌘K search</span>
+        <div className="app-header-inner">
+          <div className="app-header-start">
+            <Link to="/" className="app-brand">
+              RayWatch
+            </Link>
+            <nav className="app-nav" aria-label="Primary">
+              <Link to="/" className={`app-nav-link ${onJobs ? "active" : ""}`}>
+                Jobs
+              </Link>
+            </nav>
+          </div>
+          <button type="button" className="kbd-hint" onClick={() => window.dispatchEvent(new Event("raywatch:open-palette"))}>
+            <kbd>⌘</kbd>
+            <kbd>K</kbd>
+            <span>Search</span>
+          </button>
+        </div>
       </header>
-      <div className="app-body">{children}</div>
+      <div className="app-body">
+        <div className="page-container">{children}</div>
+      </div>
       <CommandPalette />
     </div>
   );

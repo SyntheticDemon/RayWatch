@@ -66,7 +66,10 @@ async def test_job_logs_returns_error_payload_not_500(
     async def boom(_client: object, _job_id: str) -> str:
         raise RuntimeError("ray logs down")
 
-    monkeypatch.setattr("raywatch.api.routes.jobs.fetch_job_logs_text", boom)
+    async def boom_logs(_job, *, cluster_epoch: str) -> str:
+        raise RuntimeError("ray logs down")
+
+    monkeypatch.setattr("raywatch.api.routes.jobs.fetch_logs_for_job", boom_logs)
     response = await api_client.get("/jobs/01000000/logs")
     assert response.status_code == 200
     body = response.json()

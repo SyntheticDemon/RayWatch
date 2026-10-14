@@ -20,7 +20,7 @@ make dev-api
 cd apps/web && npm run dev
 ```
 
-**Fixture dev (default):** API uses `tests/fixtures/ray/jobs_list.json` unless `RAYWATCH_USE_LIVE=1`.
+**Fixture dev (default):** API uses `tests/fixtures/ray/jobs_list.json` unless `RAYWATCH_USE_LIVE=1`. Job logs come from `tests/fixtures/ray/logs/{job_id}.log` (not Ray HTTP).
 
 **Live Ray (grounded on 2.59):** `make ray-up` → `make dev-api-live` or `make test-integration-ray`. See [ray-grounding.md](./ray-grounding.md).
 

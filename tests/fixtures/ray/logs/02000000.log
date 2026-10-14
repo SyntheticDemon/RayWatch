@@ -1,0 +1,3 @@
+INFO driver: eval.py completed successfully
+INFO metrics: accuracy=0.91 f1=0.88
+INFO raywatch-fixture: terminal job 02000000 (fixture logs)

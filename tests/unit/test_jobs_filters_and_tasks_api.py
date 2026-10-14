@@ -42,7 +42,10 @@ async def test_job_logs_endpoint_mocked(
     async def fake_logs(_client: object, _job_id: str) -> str:
         return "line1\nline2"
 
-    monkeypatch.setattr("raywatch.api.routes.jobs.fetch_job_logs_text", fake_logs)
+    async def fake_fetch(job, *, cluster_epoch: str) -> str:
+        return "line1\nline2"
+
+    monkeypatch.setattr("raywatch.api.routes.jobs.fetch_logs_for_job", fake_fetch)
     response = await api_client.get("/jobs/01000000/logs")
     assert response.status_code == 200
     assert "line1" in response.json()["logs"]

@@ -9,52 +9,60 @@ type Props = {
   rows: JobSummary[];
 };
 
+const GRID_COLS =
+  "minmax(7rem, 1.1fr) 6.5rem 8.5rem 5.5rem minmax(10rem, 2fr) minmax(8rem, 1fr)";
+
 export function VirtualizedJobsTable({ rows }: Props) {
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 44,
-    overscan: 8,
+    estimateSize: () => 48,
+    overscan: 10,
   });
 
+  if (rows.length === 0) {
+    return (
+      <div className="table-empty">
+        <p>No jobs match these filters.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="jobs-table-virtual" ref={parentRef}>
-      <table className="jobs-table">
-        <thead>
-          <tr>
-            <th>Job ID</th>
-            <th>Status</th>
-            <th>Started</th>
-            <th>Duration</th>
-            <th>Entrypoint</th>
-            <th>Tasks</th>
-          </tr>
-        </thead>
-      </table>
-      <div className="jobs-table-body" style={{ height: `${virtualizer.getTotalSize()}px`, position: "relative" }}>
+    <div className="data-table" ref={parentRef}>
+      <div className="data-table-header" style={{ gridTemplateColumns: GRID_COLS }}>
+        <span>Job ID</span>
+        <span>Status</span>
+        <span>Started</span>
+        <span>Duration</span>
+        <span>Entrypoint</span>
+        <span>Tasks</span>
+      </div>
+      <div className="data-table-virtual" style={{ height: `${virtualizer.getTotalSize()}px` }}>
         {virtualizer.getVirtualItems().map((item) => {
           const job = rows[item.index];
           return (
             <div
               key={job.job_id}
-              className="jobs-table-row"
+              className="data-table-row"
               style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
+                gridTemplateColumns: GRID_COLS,
                 height: `${item.size}px`,
                 transform: `translateY(${item.start}px)`,
               }}
             >
-              <Link to={`/jobs/${job.job_id}`} className="mono">{job.job_id}</Link>
-              <span className={`badge badge-${job.status.toLowerCase()}`}>{job.status}</span>
-              <span className="muted">{formatWhen(job.started_at)}</span>
-              <span className="muted">{formatDuration(job.started_at, job.ended_at)}</span>
-              <span className="mono truncate">{job.entrypoint}</span>
+              <Link to={`/jobs/${job.job_id}`} className="cell-link mono">
+                {job.job_id}
+              </Link>
               <span>
-                {job.task_running} run / {job.task_failed} fail / {job.task_total} total
+                <span className={`badge badge-${job.status.toLowerCase()}`}>{job.status}</span>
+              </span>
+              <span className="cell-muted">{formatWhen(job.started_at)}</span>
+              <span className="cell-muted">{formatDuration(job.started_at, job.ended_at)}</span>
+              <span className="mono cell-ellipsis" title={job.entrypoint}>{job.entrypoint}</span>
+              <span className="cell-muted cell-numeric">
+                {job.task_running} / {job.task_failed} / {job.task_total}
               </span>
             </div>
           );

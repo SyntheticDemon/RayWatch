@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 
+import { Button, Input, Select } from "@/shared/ui/primitives";
+
 type LogLevel = "ALL" | "ERROR" | "WARN" | "INFO" | "DEBUG";
 
 type LogViewerProps = {
@@ -7,6 +9,8 @@ type LogViewerProps = {
   errorMessage?: string | null;
   pollPaused: boolean;
   onTogglePause: () => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 };
 
 function lineLevel(line: string): LogLevel {
@@ -23,10 +27,18 @@ function lineLevel(line: string): LogLevel {
   return "INFO";
 }
 
-export function LogViewer({ text, errorMessage, pollPaused, onTogglePause }: LogViewerProps) {
+export function LogViewer({
+  text,
+  errorMessage,
+  pollPaused,
+  onTogglePause,
+  onRefresh,
+  isRefreshing,
+}: LogViewerProps) {
   const [level, setLevel] = useState<LogLevel>("ALL");
   const [filter, setFilter] = useState("");
   const [wrap, setWrap] = useState(true);
+  const [copyHint, setCopyHint] = useState<string | null>(null);
 
   const lines = useMemo(() => text.split("\n"), [text]);
   const visible = useMemo(() => {
@@ -42,17 +54,25 @@ export function LogViewer({ text, errorMessage, pollPaused, onTogglePause }: Log
   }, [lines, level, filter]);
 
   const copyAll = async () => {
-    await navigator.clipboard.writeText(visible.join("\n"));
+    const payload = visible.join("\n");
+    try {
+      await navigator.clipboard.writeText(payload);
+      setCopyHint("Copied");
+    } catch {
+      setCopyHint("Copy blocked — select text in the panel");
+    }
+    window.setTimeout(() => setCopyHint(null), 2500);
   };
-
-  if (errorMessage) {
-    return <p className="error">Could not fetch logs: {errorMessage}</p>;
-  }
 
   return (
     <div className="log-panel">
+      {errorMessage && (
+        <p className="log-error-banner" role="alert">
+          {errorMessage}
+        </p>
+      )}
       <div className="log-toolbar">
-        <select
+        <Select
           aria-label="Log level"
           value={level}
           onChange={(e) => setLevel(e.target.value as LogLevel)}
@@ -62,25 +82,37 @@ export function LogViewer({ text, errorMessage, pollPaused, onTogglePause }: Log
           <option value="WARN">WARN</option>
           <option value="INFO">INFO</option>
           <option value="DEBUG">DEBUG</option>
-        </select>
-        <input
-          className="search-input"
-          placeholder="Filter text"
+        </Select>
+        <Input
+          className="log-filter-input"
+          placeholder="Filter lines…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
+          aria-label="Filter log lines"
         />
-        <button type="button" className="btn-secondary" onClick={onTogglePause}>
+        <Button variant="secondary" size="sm" onClick={onTogglePause}>
           {pollPaused ? "Resume tail" : "Pause tail"}
-        </button>
-        <button type="button" className="btn-secondary" onClick={() => setWrap((w) => !w)}>
+        </Button>
+        {onRefresh && (
+          <Button variant="secondary" size="sm" disabled={isRefreshing} onClick={onRefresh}>
+            {isRefreshing ? "Refreshing…" : "Refresh"}
+          </Button>
+        )}
+        <Button variant="secondary" size="sm" onClick={() => setWrap((w) => !w)}>
           {wrap ? "No wrap" : "Wrap"}
-        </button>
-        <button type="button" className="btn-secondary" onClick={copyAll}>
+        </Button>
+        <Button variant="secondary" size="sm" onClick={copyAll}>
           Copy filtered
-        </button>
+        </Button>
+        {pollPaused && <span className="log-toolbar-hint">Tail paused</span>}
+        {copyHint && <span className="log-toolbar-hint">{copyHint}</span>}
       </div>
       <pre className={`log-viewer ${wrap ? "log-wrap" : ""}`}>
-        {visible.length ? visible.join("\n") : "(no lines match filter)"}
+        {errorMessage && !text
+          ? "(no log body — use Refresh after fixing API or switching to live Ray jobs)"
+          : visible.length
+            ? visible.join("\n")
+            : "(no lines match filter)"}
       </pre>
     </div>
   );
