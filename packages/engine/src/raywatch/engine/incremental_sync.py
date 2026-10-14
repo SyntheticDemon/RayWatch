@@ -37,8 +37,15 @@ def augment_jobs_batch(
     return IngestBatch(ops=ops, cluster_epoch=batch.cluster_epoch)
 
 
-def augment_tasks_batch(live_cache: LiveCache, batch: IngestBatch) -> IngestBatch:
+def augment_tasks_batch(
+    live_cache: LiveCache,
+    batch: IngestBatch,
+    *,
+    ray_task_total: int | None = None,
+) -> IngestBatch:
     incoming = incoming_task_ids(batch)
+    if ray_task_total is not None and len(incoming) < ray_task_total:
+        return batch
     ops = list(batch.ops)
     for task_id in list(live_cache._state.tasks.keys()):
         if task_id not in incoming:

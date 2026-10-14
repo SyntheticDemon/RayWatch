@@ -17,12 +17,11 @@ Fresh HTTP client per sample; `PERF_WARMUP=0` (cold included in gate p95).
 
 ## RayWatch vs Ray dashboard (`make benchmark`)
 
-_Last updated: 2026-10-14 03:21:54 UTC_
+_Last updated: 2026-10-14 03:25:38 UTC_
 
 Ray dashboard column from live head (`RAY_INTEGRATION=1` or `make benchmark-ray`).
 
 | jobs | raywatch GET /jobs cold (ms) | raywatch GET /jobs warm p95 (ms) | raywatch GET /jobs/{id} warm p95 (ms) | ray dashboard GET /api/v0/jobs cold (ms) | ray dashboard warm p95 (ms) | ray jobs in API payload |
 | --- | --- | --- | --- | --- | --- | --- |
-| 10 | 8.49 | 0.90 | 0.75 | 43.44 | 73.54 | 100 |
-| 25 | 1.69 | 1.83 | 1.41 | 94.81 | 94.81 | 100 |
-| 50 | 3.30 | 3.08 | 2.04 | 123.50 | 154.85 | 100 |
+| 10 | 8.92 | 1.41 | 0.77 | 61.85 | 73.49 | 100 |
+| 25 | 2.87 | 2.48 | 1.58 | 213.25 | 125.30 | 100 |

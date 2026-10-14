@@ -31,7 +31,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Stop / terminate job | `POST /jobs/{id}/stop` | **done** | Best-effort Ray HTTP |
 | Submit job from UI | — | **n/a** | Ops view; use Ray CLI/SDK |
 | Driver logs (job) | `GET /jobs/{id}/logs` + LogViewer | **partial** | `tail_lines` / `after_offset` incremental tail; WS + poll append; download |
-| Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **partial** | Fixture task ingest; live task sync evolving |
+| Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **partial** | Live Ray ingest + incremental remove when task page is complete |
 
 ### Tasks & entities
 

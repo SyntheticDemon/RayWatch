@@ -47,8 +47,25 @@ else:
     print('logs bytes:', len(b.get('logs') or ''))
 "
 
+TASKS="$(curl -sf "http://127.0.0.1:${API_PORT}/jobs/${JOB_ID}/tasks?limit=50")"
+echo "${TASKS}" | python3 -c "
+import json,sys
+b=json.load(sys.stdin)
+items=b.get('items') or []
+print('tasks for job:', len(items))
+assert 'sync' in b
+"
+
 echo "==> Integration tests (live Ray)"
 RAY_INTEGRATION=1 RAYWATCH_FIXTURE_JOBS= RAY_DASHBOARD_URL="${RAY_DASHBOARD_URL}" \
   uv run pytest tests/integration -m integration -q --tb=short
+
+if [[ "${VERIFY_LIVE_BENCHMARK:-1}" != "0" ]]; then
+  echo "==> Jobs list warm p95 vs Ray dashboard (assert)"
+  RAY_INTEGRATION=1 RAYWATCH_BENCHMARK_COMPARE_RAY=1 RAYWATCH_BENCHMARK_ASSERT_WARM=1 \
+    RAYWATCH_BENCHMARK_WRITE=1 RAY_DASHBOARD_URL="${RAY_DASHBOARD_URL}" \
+    BENCHMARK_JOB_SCALES=10,25 \
+    uv run pytest tests/nfr/test_dashboard_latency_benchmark.py -m benchmark -q --tb=short
+fi
 
 echo "==> OK live stack verified"

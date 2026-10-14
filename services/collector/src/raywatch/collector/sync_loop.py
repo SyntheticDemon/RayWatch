@@ -10,7 +10,7 @@ from pathlib import Path
 import httpx
 from raywatch.adapter_ray.normalize_cluster import normalize_actors_payload, normalize_nodes_payload
 from raywatch.adapter_ray.normalize_jobs import normalize_jobs_payload
-from raywatch.adapter_ray.normalize_tasks import normalize_tasks_payload
+from raywatch.adapter_ray.normalize_tasks import normalize_tasks_payload, task_total_from_payload
 from raywatch.adapter_ray.ray_client import (
     fetch_actors_json,
     fetch_jobs_json,
@@ -74,7 +74,11 @@ async def _apply_tasks_payload(
 ) -> None:
     mapping = _ray_internal_to_submission_id(live_cache)
     batch = normalize_tasks_payload(payload, mapping, cluster_epoch=cluster_epoch)
-    batch = augment_tasks_batch(live_cache, batch)
+    batch = augment_tasks_batch(
+        live_cache,
+        batch,
+        ray_task_total=task_total_from_payload(payload),
+    )
     live_cache.apply_ingest_batch(batch)
 
 

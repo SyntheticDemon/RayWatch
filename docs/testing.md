@@ -67,7 +67,7 @@ CI job: start **Ray head** in a container (pinned image matching `SUPPORTED_RAY_
 | `job-detail.spec.ts` | Fixture logs toolbar, stop job (fixture) |
 | `cluster.spec.ts` | Nodes/actors from fixture sync |
 
-**Live Ray (agent/CI):** `make verify-live` — `ray-up`, `demo-ray`, live API on `:18081`, real `GET /jobs/{id}/logs`, integration pytest.
+**Live Ray (agent/CI):** `make verify-live` — `ray-up`, `demo-ray`, live API on `:18081`, real logs + tasks curl, integration pytest, and `benchmark-ray` warm assert at scales 10/25 (`VERIFY_LIVE_BENCHMARK=0` to skip).
 
 CI web job runs `npm run test:e2e` on every PR.
 

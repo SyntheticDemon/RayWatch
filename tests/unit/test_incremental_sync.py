@@ -70,3 +70,37 @@ def test_augment_jobs_archives_evicted(tmp_path) -> None:
     assert cache.get_job("gone") is None
     assert store.get_job("gone") is not None
     assert cache.get_job("stay") is not None
+
+
+def test_augment_tasks_skips_evict_when_ray_page_incomplete() -> None:
+    cache = LiveCache()
+    cache.apply_ingest_batch(
+        IngestBatch(
+            ops=[
+                IngestOp(
+                    kind="upsert_task",
+                    task=TaskSummary(
+                        task_id="t-stale",
+                        job_id="j1",
+                        name="stale",
+                        status=TaskStatus.FINISHED,
+                    ),
+                )
+            ]
+        )
+    )
+    incoming = IngestBatch(
+        ops=[
+            IngestOp(
+                kind="upsert_task",
+                task=TaskSummary(
+                    task_id="t-new",
+                    job_id="j1",
+                    name="new",
+                    status=TaskStatus.RUNNING,
+                ),
+            )
+        ]
+    )
+    merged = augment_tasks_batch(cache, incoming, ray_task_total=99)
+    assert all(op.kind != "remove_task" for op in merged.ops)
