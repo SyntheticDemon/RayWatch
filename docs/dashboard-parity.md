@@ -48,7 +48,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 |--------------------------|----------|--------|-------|
 | Auto-refresh job list | Sync loop + TanStack Query | **done** | |
 | Stale / disconnected indicator | Sync banner + `/freshness` | **done** | |
-| WebSocket live patches | `WS /ws/live` | **partial** | Hub `jobs_preview`; job scope sends `job` + `tasks_preview` |
+| WebSocket live patches | `WS /ws/live` | **close** | Hub `jobs_preview` upserts rows on first page; job scope sends `job` + `tasks_preview` |
 | Manual resync | `POST /sync/trigger` | **done** | |
 
 ### Search & navigation

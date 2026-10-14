@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { useJobsHubFilters } from "@/features/jobs/use-jobs-hub-filters";
 import { VirtualizedJobsTable } from "@/features/jobs/virtualized-jobs-table";
+import { mergeJobRows } from "@/shared/lib/merge-jobs-preview";
 import { fetchJobs, triggerSync, type JobSummary, type SyncMeta } from "@/shared/api/client";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { Button, Checkbox, Field, Input, SearchField, Select } from "@/shared/ui/primitives";
@@ -18,8 +19,7 @@ export function JobsPage() {
   const queryClient = useQueryClient();
   const { connected } = useLiveSync(undefined, {
     onJobsPreview: (preview, sync) => {
-      const byId = new Map(preview.map((job) => [job.job_id, job]));
-      setRows((prev) => prev.map((job) => byId.get(job.job_id) ?? job));
+      setRows((prev) => mergeJobRows(prev, preview, { allowNewRows: !cursor }));
       queryClient.setQueriesData(
         { predicate: (q) => q.queryKey[0] === "jobs" },
         (old: { sync?: SyncMeta } | undefined) => (old ? { ...old, sync } : old),
