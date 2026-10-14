@@ -1,11 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { fetchClusterActors, fetchClusterNodes } from "@/shared/api/client";
+import {
+  fetchClusterActors,
+  fetchClusterNodes,
+  triggerSync,
+} from "@/shared/api/client";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { Button } from "@/shared/ui/primitives";
 import { SyncStatus } from "@/shared/ui/sync-status";
-import { triggerSync } from "@/shared/api/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function ClusterPage() {
   const queryClient = useQueryClient();

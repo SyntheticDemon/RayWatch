@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import App from "./App.tsx";
+import { ClusterPage } from "@/features/cluster/cluster-page";
 import { JobDetailPage } from "@/features/jobs/job-detail-page";
 import { JobsPage } from "@/features/jobs/jobs-page";
 import { TaskDetailPage } from "@/features/jobs/task-detail-page";
@@ -18,6 +19,7 @@ createRoot(document.getElementById("root")!).render(
         <App>
           <Routes>
             <Route path="/" element={<JobsPage />} />
+            <Route path="/cluster" element={<ClusterPage />} />
             <Route path="/jobs/:jobId" element={<JobDetailPage />} />
             <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
           </Routes>

@@ -54,13 +54,15 @@ def normalize_jobs_payload(payload: dict[str, Any], cluster_epoch: str = "defaul
     ops: list[IngestOp] = []
     for job_id, row in rows:
         status = _map_status(row.get("status"))
-        task_stats = row.get("task_stats") or row.get("tasks") or {}
+        raw_stats = row.get("task_stats") or row.get("tasks") or {}
+        task_stats = raw_stats if isinstance(raw_stats, dict) else {}
         running = int(task_stats.get("RUNNING") or task_stats.get("running") or 0)
         failed = int(task_stats.get("FAILED") or task_stats.get("failed") or 0)
         total = int(task_stats.get("total") or running + failed)
         metadata = {k: str(v) for k, v in (row.get("metadata") or {}).items()}
         ray_internal = row.get("job_id")
-        driver_info = row.get("driver_info") if isinstance(row.get("driver_info"), dict) else {}
+        raw_driver = row.get("driver_info")
+        driver_info: dict[str, Any] = raw_driver if isinstance(raw_driver, dict) else {}
         if driver_info.get("id"):
             ray_internal = driver_info.get("id")
         if ray_internal:

@@ -1,4 +1,10 @@
-.PHONY: help install test coverage lint fmt typecheck integration dev-api ray-up ray-down test-integration-ray ray-smoke benchmark benchmark-ray perf perf-baseline demo-ray
+.PHONY: help install test coverage lint fmt typecheck integration dev-api ray-up ray-down test-integration-ray ray-smoke benchmark benchmark-ray perf perf-baseline demo-ray test-e2e verify-live
+
+test-e2e:
+	cd apps/web && npm run test:e2e
+
+verify-live:
+	bash scripts/verify_live_stack.sh
 
 RAY_VERSION ?= 2.59.0
 export RAY_VERSION

@@ -902,6 +902,67 @@ a:hover {
   font-size: 0.8125rem;
 }
 
+.cluster-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 960px) {
+  .cluster-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.table-card-header h2 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.table-card-count {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.table-card-loading {
+  padding: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.simple-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.simple-table th,
+.simple-table td {
+  padding: 0.55rem 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.simple-table th {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.simple-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
 /* Legacy class names map to new system */
 .btn-secondary:not(.btn) {
   height: 2rem;

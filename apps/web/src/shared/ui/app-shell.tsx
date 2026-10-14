@@ -10,6 +10,7 @@ type AppShellProps = {
 export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
   const onJobs = location.pathname === "/" || location.pathname.startsWith("/jobs");
+  const onCluster = location.pathname.startsWith("/cluster");
 
   return (
     <div className="app-shell">
@@ -22,6 +23,9 @@ export function AppShell({ children }: AppShellProps) {
             <nav className="app-nav" aria-label="Primary">
               <Link to="/" className={`app-nav-link ${onJobs ? "active" : ""}`}>
                 Jobs
+              </Link>
+              <Link to="/cluster" className={`app-nav-link ${onCluster ? "active" : ""}`}>
+                Cluster
               </Link>
             </nav>
           </div>

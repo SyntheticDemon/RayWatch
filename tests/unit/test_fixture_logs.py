@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from raywatch.adapter_ray.fixture_logs import load_fixture_job_logs
 from raywatch.adapter_ray.job_logs import fetch_logs_for_job
 from raywatch.model.job import JobDetail, JobStatus

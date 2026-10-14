@@ -13,13 +13,16 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-COMPOSE="docker compose -f ${ROOT}/compose/docker-compose.yml"
+COMPOSE_FILE="${ROOT}/compose/docker-compose.yml"
+dc() {
+  docker compose -f "${COMPOSE_FILE}" "$@"
+}
 DASHBOARD="${RAY_DASHBOARD_URL:-http://127.0.0.1:8265}"
 API="${RAYWATCH_API_URL:-http://127.0.0.1:8080}"
 N_QUICK="${DEMO_RAY_JOBS:-6}"
 
 echo "==> Starting Ray head (if needed)..."
-${COMPOSE} up -d ray-head
+dc up -d ray-head
 
 echo "==> Waiting for dashboard ${DASHBOARD}..."
 for _ in $(seq 1 60); do
@@ -35,7 +38,7 @@ submit() {
   local name="$1"
   local py="$2"
   echo "   submit: ${name}"
-  ${COMPOSE} exec -T ray-head ray job submit \
+  dc exec -T ray-head ray job submit \
     --address="${DASHBOARD}" \
     --no-wait \
     --submission-id "raysubmit_demo_${name}_$(date +%s)" \

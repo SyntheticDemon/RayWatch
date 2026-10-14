@@ -90,6 +90,32 @@ export type SearchResponse = {
   sync: SyncMeta;
 };
 
+export type NodeSummary = {
+  node_id: string;
+  hostname: string | null;
+  state: string | null;
+  is_head: boolean;
+};
+
+export type ActorSummary = {
+  actor_id: string;
+  class_name: string | null;
+  state: string | null;
+  job_id: string | null;
+  worker_id: string | null;
+  node_id: string | null;
+};
+
+export type NodesPage = {
+  items: NodeSummary[];
+  sync: SyncMeta;
+};
+
+export type ActorsPage = {
+  items: ActorSummary[];
+  sync: SyncMeta;
+};
+
 export type JobsQuery = {
   cursor?: string;
   limit?: number;
@@ -155,4 +181,12 @@ export function triggerSync(): Promise<SyncTriggerResponse> {
 
 export function searchEntities(q: string, limit = 20): Promise<SearchResponse> {
   return fetchJson<SearchResponse>(`/search${qs({ q, limit })}`);
+}
+
+export function fetchClusterNodes(): Promise<NodesPage> {
+  return fetchJson<NodesPage>("/cluster/nodes");
+}
+
+export function fetchClusterActors(limit = 200): Promise<ActorsPage> {
+  return fetchJson<ActorsPage>(`/cluster/actors${qs({ limit })}`);
 }

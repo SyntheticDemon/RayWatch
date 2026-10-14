@@ -2,7 +2,6 @@
 
 import pytest
 from httpx import AsyncClient
-
 from raywatch.api.state import live_cache
 
 

@@ -15,7 +15,7 @@ from raywatch.model.api_dto import (
     TasksPage,
 )
 from raywatch.model.ingest import IngestBatch, IngestOp
-from raywatch.model.job import JobDetail, JobStatus
+from raywatch.model.job import JobStatus
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 

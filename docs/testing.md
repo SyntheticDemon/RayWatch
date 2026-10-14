@@ -59,9 +59,17 @@ CI job: start **Ray head** in a container (pinned image matching `SUPPORTED_RAY_
 
 ## 4. End-to-end (optional CI nightly or pre-release)
 
-**Playwright:** UI against API + Ray compose stack — open jobs list, open job, open task drawer, confirm stop dialog.
+**Playwright** (`apps/web/e2e/`, `make test-e2e`): starts fixture API + `vite preview` automatically (see `playwright.config.ts`). No browser manual steps.
 
-Keep **1–3** stable scenarios; run on `main` nightly or release tags to avoid slowing every PR.
+| Spec | Covers |
+|------|--------|
+| `jobs-hub.spec.ts` | Jobs list, job detail header |
+| `job-detail.spec.ts` | Fixture logs toolbar, stop job (fixture) |
+| `cluster.spec.ts` | Nodes/actors from fixture sync |
+
+**Live Ray (agent/CI):** `make verify-live` — `ray-up`, `demo-ray`, live API on `:18081`, real `GET /jobs/{id}/logs`, integration pytest.
+
+CI web job runs `npm run test:e2e` on every PR.
 
 ## 5. Non-functional checks
 
@@ -89,8 +97,11 @@ make test
 make test-integration
 # equivalent: docker compose -f compose/docker-compose.ci.yml run --rm test
 
-# Full local stack for manual QA
-docker compose -f compose/docker-compose.yml up
+# Frontend e2e (fixture API + Playwright Chromium)
+make test-e2e
+
+# Live Ray + API logs smoke (Docker; ~30s)
+make verify-live
 ```
 
 ## CI pipeline (GitHub Actions sketch)

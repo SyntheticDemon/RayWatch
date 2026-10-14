@@ -34,13 +34,12 @@ async def test_fresh_client_creates_new_transport_each_sample(
         )
     )
     created = 0
-    real_transport = ASGITransport
 
-    class CountingTransport(real_transport):  # type: ignore[misc,valid-type]
-        def __init__(self, *args: object, **kwargs: object) -> None:
+    class CountingTransport(ASGITransport):
+        def __init__(self, app, *args, **kwargs) -> None:
             nonlocal created
             created += 1
-            super().__init__(*args, **kwargs)
+            super().__init__(app, *args, **kwargs)
 
     monkeypatch.setattr("support.request_latency.ASGITransport", CountingTransport)
     report = await measure_fresh_client("/jobs?limit=10", iterations=5, warmup=0)

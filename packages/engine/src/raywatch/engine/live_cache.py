@@ -179,15 +179,15 @@ class LiveCache:
             job_ids = [
                 jid
                 for jid in job_ids
-                if self._state.jobs[jid].started_at is not None
-                and self._state.jobs[jid].started_at >= started_after
+                if (started := self._state.jobs[jid].started_at) is not None
+                and started >= started_after
             ]
         if started_before is not None:
             job_ids = [
                 jid
                 for jid in job_ids
-                if self._state.jobs[jid].started_at is not None
-                and self._state.jobs[jid].started_at <= started_before
+                if (started := self._state.jobs[jid].started_at) is not None
+                and started <= started_before
             ]
         if failed_within_hours is not None:
             cutoff = _utc_now().timestamp() - failed_within_hours * 3600
@@ -195,8 +195,8 @@ class LiveCache:
                 jid
                 for jid in job_ids
                 if self._state.jobs[jid].status == JobStatus.FAILED
-                and self._state.jobs[jid].ended_at is not None
-                and self._state.jobs[jid].ended_at.timestamp() >= cutoff
+                and (ended := self._state.jobs[jid].ended_at) is not None
+                and ended.timestamp() >= cutoff
             ]
         if q:
             needle = q.lower().strip()
@@ -207,8 +207,8 @@ class LiveCache:
                     if needle in jid.lower()
                     or needle in self._state.jobs[jid].entrypoint.lower()
                     or (
-                        self._state.jobs[jid].error_message
-                        and needle in self._state.jobs[jid].error_message.lower()
+                        (err := self._state.jobs[jid].error_message) is not None
+                        and needle in err.lower()
                     )
                 ]
         if sort == "started_at":
