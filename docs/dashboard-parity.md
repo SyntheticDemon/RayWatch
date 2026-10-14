@@ -40,7 +40,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Task detail | `GET /tasks/{id}` + task drawer/page | **partial** | Shared `TaskInspector` + attempt timeline |
 | Worker / node drill-down | Worker card + actor card + cluster links | **partial** | Actor → node one-hop from live index |
 | Actors, objects, global state browser | `GET /cluster/actors` + `GET /cluster/objects` + search | **partial** | Indexed object table (Ray cap); not full lineage browser |
-| Metrics / charts / GPU views | — | **gap** | Out of v1; not blocking jobs hub |
+| Metrics / charts / GPU views | Cluster utilization bars (`cluster_status`) | **partial** | Snapshot CPU/memory/object-store; no time-series charts |
 
 ### Live & freshness
 
@@ -63,7 +63,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **partial** | CPU/GPU/memory totals + node table; no utilization charts |
+| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **partial** | Totals + utilization bars + node/actor/object tables |
 | Serve / Train dashboards | — | **n/a** | Separate products |
 
 ## API coverage map (tests)
@@ -85,7 +85,7 @@ Contract and behavior tests should stay aligned with this list. Primary file: `t
 
 ## v1 boundary (not full Ray dashboard)
 
-RayWatch v1 intentionally omits **time-series metrics / utilization charts** and **multi-hop object lineage** (see [frontend-features.md](./frontend-features.md) “Explicitly not in frontend v1”). Everything else in the matrix above targets **done** or **close** for operator workflows (jobs, tasks, logs, cluster entities, search, live sync).
+RayWatch v1 omits **historical metrics charts** (Grafana-style) and **multi-hop object lineage** (see [frontend-features.md](./frontend-features.md) “Explicitly not in frontend v1”). Everything else in the matrix above targets **done** or **close** for operator workflows (jobs, tasks, logs, cluster entities, search, live sync).
 
 ## Evidence (live Ray, 2026-10-14)
 

@@ -9,6 +9,7 @@ import {
   fetchClusterOverview,
   triggerSync,
 } from "@/shared/api/client";
+import { ResourceUtilBars } from "@/features/cluster/resource-util-bars";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { Button } from "@/shared/ui/primitives";
 import { clusterBreadcrumbs } from "@/shared/ui/breadcrumb-trail";
@@ -108,6 +109,8 @@ export function ClusterPage() {
           </Button>
         </div>
       </header>
+
+      {overview?.utilization && <ResourceUtilBars utilization={overview.utilization} />}
 
       {overview && (
         <div className="cluster-summary" role="region" aria-label="Cluster summary">

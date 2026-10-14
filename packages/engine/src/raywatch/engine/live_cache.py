@@ -4,7 +4,13 @@ import bisect
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from raywatch.model.cluster import ActorSummary, ClusterOverview, NodeSummary, ObjectSummary
+from raywatch.model.cluster import (
+    ActorSummary,
+    ClusterOverview,
+    NodeSummary,
+    ObjectSummary,
+    ResourceUtilization,
+)
 from raywatch.model.freshness import SyncMeta
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus, JobSummary
@@ -28,6 +34,7 @@ class LiveCacheState:
     nodes: dict[str, NodeSummary] = field(default_factory=dict)
     actors: dict[str, ActorSummary] = field(default_factory=dict)
     objects: dict[str, ObjectSummary] = field(default_factory=dict)
+    utilization: ResourceUtilization | None = None
 
 
 class LiveCache:
@@ -331,10 +338,13 @@ class LiveCache:
         nodes: list[NodeSummary],
         actors: list[ActorSummary],
         objects: list[ObjectSummary] | None = None,
+        utilization: ResourceUtilization | None = None,
     ) -> None:
         self._state.nodes = {n.node_id: n for n in nodes}
         self._state.actors = {a.actor_id: a for a in actors}
         self._state.objects = {o.object_id: o for o in (objects or [])}
+        if utilization is not None:
+            self._state.utilization = utilization
 
     def list_nodes(self) -> list[NodeSummary]:
         return sorted(self._state.nodes.values(), key=lambda n: n.node_id)
@@ -355,6 +365,7 @@ class LiveCache:
             memory_bytes_total=memory,
             job_count=self.job_count(),
             task_count=self.task_count(),
+            utilization=self._state.utilization,
         )
 
     def list_actors(self, limit: int = 200) -> list[ActorSummary]:

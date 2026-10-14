@@ -1028,6 +1028,48 @@ a:hover {
   font-size: 0.8125rem;
 }
 
+.util-bars {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+}
+
+.util-bars-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.util-bar-row {
+  margin-bottom: 0.65rem;
+}
+
+.util-bar-row:last-child {
+  margin-bottom: 0;
+}
+
+.util-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.util-bar-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.util-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
 .cluster-summary {
   display: grid;
   gap: 0.75rem;

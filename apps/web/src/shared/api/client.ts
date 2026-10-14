@@ -142,6 +142,15 @@ export type ObjectsPage = {
   sync: SyncMeta;
 };
 
+export type ResourceUtilization = {
+  cpu_used: number;
+  cpu_total: number;
+  memory_bytes_used: number;
+  memory_bytes_total: number;
+  object_store_bytes_used: number;
+  object_store_bytes_total: number;
+};
+
 export type ClusterOverview = {
   nodes_total: number;
   nodes_alive: number;
@@ -152,6 +161,7 @@ export type ClusterOverview = {
   memory_bytes_total: number;
   job_count: number;
   task_count: number;
+  utilization: ResourceUtilization | null;
 };
 
 export type ActorResponse = {

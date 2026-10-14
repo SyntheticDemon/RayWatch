@@ -12,6 +12,15 @@ class NodeSummary(BaseModel):
     object_store_bytes_total: float | None = None
 
 
+class ResourceUtilization(BaseModel):
+    cpu_used: float
+    cpu_total: float
+    memory_bytes_used: float
+    memory_bytes_total: float
+    object_store_bytes_used: float
+    object_store_bytes_total: float
+
+
 class ClusterOverview(BaseModel):
     nodes_total: int
     nodes_alive: int
@@ -22,6 +31,7 @@ class ClusterOverview(BaseModel):
     memory_bytes_total: float
     job_count: int
     task_count: int
+    utilization: ResourceUtilization | None = None
 
 
 class ActorSummary(BaseModel):
