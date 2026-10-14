@@ -4,7 +4,15 @@ import bisect
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from raywatch.model.cluster import ActorSummary, ClusterOverview, NodeSummary
+from raywatch.engine.job_kind import job_id_matches_kind
+from raywatch.model.cluster import (
+    ActorSummary,
+    ClusterOverview,
+    NodeSummary,
+    ObjectSummary,
+    ResourceUtilization,
+    UtilizationSample,
+)
 from raywatch.model.freshness import SyncMeta
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus, JobSummary
@@ -27,6 +35,9 @@ class LiveCacheState:
     ray_reachable: bool = True
     nodes: dict[str, NodeSummary] = field(default_factory=dict)
     actors: dict[str, ActorSummary] = field(default_factory=dict)
+    objects: dict[str, ObjectSummary] = field(default_factory=dict)
+    utilization: ResourceUtilization | None = None
+    utilization_history: list[UtilizationSample] = field(default_factory=list)
 
 
 class LiveCache:
@@ -186,6 +197,19 @@ class LiveCache:
                         "status": node.state,
                     }
                 )
+        for object_id, obj in self._state.objects.items():
+            if len(hits) >= limit:
+                break
+            if needle in object_id.lower():
+                hits.append(
+                    {
+                        "kind": "object",
+                        "id": object_id,
+                        "job_id": None,
+                        "label": obj.reference_type or object_id[:16],
+                        "status": obj.task_status,
+                    }
+                )
         return hits[:limit]
 
     def list_jobs(
@@ -199,6 +223,7 @@ class LiveCache:
         started_after: datetime | None = None,
         started_before: datetime | None = None,
         failed_within_hours: float | None = None,
+        job_kind: str | None = None,
     ) -> tuple[list[JobSummary], str | None]:
         limit = min(max(limit, 1), 100)
         has_filters = (
@@ -206,6 +231,7 @@ class LiveCache:
             or started_after is not None
             or started_before is not None
             or failed_within_hours is not None
+            or job_kind is not None
             or (q is not None and q.strip())
         )
         if not has_filters and sort == "job_id":
@@ -250,6 +276,8 @@ class LiveCache:
                         and needle in err.lower()
                     )
                 ]
+        if job_kind is not None:
+            job_ids = [jid for jid in job_ids if job_id_matches_kind(jid, job_kind)]
         if sort == "started_at":
             job_ids.sort(
                 key=lambda jid: self._state.jobs[jid].started_at or _utc_now(),
@@ -312,9 +340,21 @@ class LiveCache:
     def task_count(self) -> int:
         return len(self._state.tasks)
 
-    def set_cluster_snapshot(self, nodes: list[NodeSummary], actors: list[ActorSummary]) -> None:
+    def set_cluster_snapshot(
+        self,
+        nodes: list[NodeSummary],
+        actors: list[ActorSummary],
+        objects: list[ObjectSummary] | None = None,
+        utilization: ResourceUtilization | None = None,
+    ) -> None:
         self._state.nodes = {n.node_id: n for n in nodes}
         self._state.actors = {a.actor_id: a for a in actors}
+        self._state.objects = {o.object_id: o for o in (objects or [])}
+        if utilization is not None:
+            self._state.utilization = utilization
+            sample = UtilizationSample(recorded_at=_utc_now(), **utilization.model_dump())
+            history = [*self._state.utilization_history, sample]
+            self._state.utilization_history = history[-48:]
 
     def list_nodes(self) -> list[NodeSummary]:
         return sorted(self._state.nodes.values(), key=lambda n: n.node_id)
@@ -329,11 +369,13 @@ class LiveCache:
             nodes_total=len(nodes),
             nodes_alive=len(alive),
             actors_total=len(self._state.actors),
+            objects_total=len(self._state.objects),
             cpu_total=cpu,
             gpu_total=gpu,
             memory_bytes_total=memory,
             job_count=self.job_count(),
             task_count=self.task_count(),
+            utilization=self._state.utilization,
         )
 
     def list_actors(self, limit: int = 200) -> list[ActorSummary]:
@@ -346,3 +388,14 @@ class LiveCache:
 
     def get_actor(self, actor_id: str) -> ActorSummary | None:
         return self._state.actors.get(actor_id)
+
+    def list_objects(self, limit: int = 200) -> list[ObjectSummary]:
+        limit = min(max(limit, 1), 500)
+        items = sorted(self._state.objects.values(), key=lambda o: o.object_id)
+        return items[:limit]
+
+    def get_object(self, object_id: str) -> ObjectSummary | None:
+        return self._state.objects.get(object_id)
+
+    def utilization_history(self) -> list[UtilizationSample]:
+        return list(self._state.utilization_history)

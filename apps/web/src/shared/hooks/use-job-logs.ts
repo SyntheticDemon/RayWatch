@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { fetchJobLogs, type JobLogsResponse } from "@/shared/api/client";
 
+const INITIAL_TAIL_LINES = 400;
+
 type UseJobLogsOptions = {
   paused: boolean;
   pollMs: number;
@@ -39,10 +41,12 @@ export function useJobLogs(jobId: string, options: UseJobLogsOptions) {
       if (!jobId) return;
       setFetching(true);
       try {
-        const body = await fetchJobLogs(jobId, {
-          after_offset:
-            incremental && contentLengthRef.current > 0 ? contentLengthRef.current : undefined,
-        });
+        const body = await fetchJobLogs(
+          jobId,
+          incremental && contentLengthRef.current > 0
+            ? { after_offset: contentLengthRef.current }
+            : { tail_lines: INITIAL_TAIL_LINES },
+        );
         setErrorMessage(body.error_message);
         const applied = applyLogBody(
           incremental,

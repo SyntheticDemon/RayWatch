@@ -78,6 +78,34 @@ async def fetch_nodes_json(client: httpx.AsyncClient) -> dict[str, Any]:
     return body
 
 
+def _objects_fetch_limit() -> int:
+    return int(os.environ.get("RAYWATCH_RAY_OBJECTS_FETCH_LIMIT", "500"))
+
+
+async def fetch_cluster_status_json(client: httpx.AsyncClient) -> dict[str, Any]:
+    url = f"{ray_dashboard_base_url()}/api/cluster_status"
+    response = await client.get(url, timeout=30.0)
+    response.raise_for_status()
+    body = response.json()
+    if not isinstance(body, dict):
+        raise ValueError("Ray cluster_status response must be a JSON object")
+    return body
+
+
+async def fetch_objects_json(client: httpx.AsyncClient) -> dict[str, Any]:
+    url = f"{ray_dashboard_base_url()}/api/v0/objects"
+    response = await client.get(
+        url,
+        params={"limit": _objects_fetch_limit()},
+        timeout=60.0,
+    )
+    response.raise_for_status()
+    body = response.json()
+    if not isinstance(body, dict):
+        raise ValueError("Ray objects response must be a JSON object")
+    return body
+
+
 async def fetch_actors_json(client: httpx.AsyncClient) -> dict[str, Any]:
     url = f"{ray_dashboard_base_url()}/api/v0/actors"
     response = await client.get(url, timeout=60.0)

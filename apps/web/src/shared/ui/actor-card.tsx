@@ -20,7 +20,7 @@ export function ActorCard({ actorId }: ActorCardProps) {
   }
 
   const actor = data?.actor;
-  const clusterActorUrl = `/cluster?focus=actor&id=${encodeURIComponent(actorId)}`;
+  const clusterActorUrl = `/actors?id=${encodeURIComponent(actorId)}`;
   const clusterNodeUrl =
     actor?.node_id ? `/cluster?focus=node&id=${encodeURIComponent(actor.node_id)}` : null;
 

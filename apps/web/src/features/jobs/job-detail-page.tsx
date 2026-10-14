@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
@@ -46,12 +46,16 @@ export function JobDetailPage() {
     refetchInterval: connected ? false : 5000,
   });
 
-  const tasksQuery = useQuery({
+  const tasksQuery = useInfiniteQuery({
     queryKey: ["job-tasks", jobId],
-    queryFn: () => fetchJobTasks(jobId),
+    queryFn: ({ pageParam }) => fetchJobTasks(jobId, pageParam),
     enabled: Boolean(jobId),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.next_cursor ?? undefined,
     refetchInterval: connected ? false : 5000,
   });
+
+  const tasks = tasksQuery.data?.pages.flatMap((page) => page.items) ?? [];
 
   const taskQuery = useQuery({
     queryKey: ["task", selectedTaskId],
@@ -85,7 +89,6 @@ export function JobDetailPage() {
   }
 
   const job = jobQuery.data.job;
-  const tasks = tasksQuery.data?.items ?? [];
   const sync = jobQuery.data.sync;
   const selectedTask = selectedTaskId
     ? (tasks.find((t) => t.task_id === selectedTaskId) ?? taskQuery.data?.task)
@@ -167,15 +170,29 @@ export function JobDetailPage() {
       </dl>
 
       <section className="panel">
-        <h2>Tasks</h2>
+        <h2>Nested runs</h2>
         {tasksQuery.isLoading ? (
           <p className="muted">Loading tasks…</p>
         ) : (
-          <TaskTree
-            tasks={tasks}
-            selectedTaskId={selectedTaskId}
-            onSelect={(id) => setSearchParams({ task: id })}
-          />
+          <>
+            <TaskTree
+              tasks={tasks}
+              selectedTaskId={selectedTaskId}
+              onSelect={(id) => setSearchParams({ task: id })}
+            />
+            {tasksQuery.hasNextPage && (
+              <div className="panel-actions">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={tasksQuery.isFetchingNextPage}
+                  onClick={() => tasksQuery.fetchNextPage()}
+                >
+                  {tasksQuery.isFetchingNextPage ? "Loading more tasks…" : "Load more tasks"}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -185,6 +202,9 @@ export function JobDetailPage() {
 
       <section className="panel">
         <h2>{selectedTaskId ? "Task logs (filtered)" : "Job logs"}</h2>
+        <p className="muted" style={{ marginTop: "-0.25rem", marginBottom: "0.75rem" }}>
+          Tails the latest lines first, then polls for new content (no full-file download in the UI).
+        </p>
         {logsLoading ? (
           <p className="muted">Loading logs…</p>
         ) : (

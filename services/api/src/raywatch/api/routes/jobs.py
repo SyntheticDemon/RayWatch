@@ -37,6 +37,7 @@ def list_jobs(
     started_before: datetime | None = None,
     failed_within_hours: float | None = Query(default=None, ge=0.1, le=720),
     include_archived: bool = False,
+    job_kind: str | None = Query(default=None, pattern="^(submission|internal)$"),
 ) -> JobsPage:
     if include_archived:
         items, next_cursor = list_jobs_merged(
@@ -51,6 +52,7 @@ def list_jobs(
             started_after=started_after,
             started_before=started_before,
             failed_within_hours=failed_within_hours,
+            job_kind=job_kind,
         )
     else:
         items, next_cursor = live_cache.list_jobs(
@@ -62,6 +64,7 @@ def list_jobs(
             started_after=started_after,
             started_before=started_before,
             failed_within_hours=failed_within_hours,
+            job_kind=job_kind,
         )
     return JobsPage(items=items, next_cursor=next_cursor, sync=live_cache.sync_meta())
 

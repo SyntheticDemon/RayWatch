@@ -29,12 +29,24 @@ export function TaskInspector({ task, showJobLink }: TaskInspectorProps) {
       <dl className="meta-grid">
         <dt>Task ID</dt>
         <dd className="mono">{task.task_id}</dd>
+        <dt>Job</dt>
+        <dd>
+          <Link to={`/jobs/${task.job_id}`} className="text-link mono">{task.job_id}</Link>
+        </dd>
         <dt>Status</dt>
         <dd>{task.status}</dd>
         <dt>Function</dt>
         <dd className="mono">{task.func_or_class || "—"}</dd>
         <dt>Parent task</dt>
-        <dd className="mono">{task.parent_task_id ?? "—"}</dd>
+        <dd className="mono">
+          {task.parent_task_id ? (
+            <Link to={`/tasks/${task.parent_task_id}`} className="text-link">
+              {task.parent_task_id}
+            </Link>
+          ) : (
+            "—"
+          )}
+        </dd>
         {task.error_message && (
           <>
             <dt>Error</dt>

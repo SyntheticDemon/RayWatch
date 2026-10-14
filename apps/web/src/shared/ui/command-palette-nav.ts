@@ -6,7 +6,14 @@ export type PaletteNavItem =
 
 export const PALETTE_COMMANDS: Array<{ id: string; label: string; path: string; keywords: string }> = [
   { id: "jobs", label: "Go to Jobs", path: "/", keywords: "jobs home list" },
-  { id: "cluster", label: "Go to Cluster", path: "/cluster", keywords: "cluster nodes actors" },
+  { id: "actors", label: "Go to Actors", path: "/actors", keywords: "actors ray actor" },
+  { id: "cluster", label: "Go to Cluster", path: "/cluster", keywords: "cluster nodes objects" },
+  {
+    id: "internal-runs",
+    label: "Go to Internal runs",
+    path: "/internal-runs",
+    keywords: "internal driver nested runs",
+  },
 ];
 
 export function pathForSearchHit(hit: SearchHit): string {
@@ -15,8 +22,9 @@ export function pathForSearchHit(hit: SearchHit): string {
     if (hit.job_id) return `/jobs/${hit.job_id}?task=${hit.id}`;
     return `/tasks/${hit.id}`;
   }
-  if (hit.kind === "actor") return `/cluster?focus=actor&id=${encodeURIComponent(hit.id)}`;
+  if (hit.kind === "actor") return `/actors?id=${encodeURIComponent(hit.id)}`;
   if (hit.kind === "node") return `/cluster?focus=node&id=${encodeURIComponent(hit.id)}`;
+  if (hit.kind === "object") return `/cluster?focus=object&id=${encodeURIComponent(hit.id)}`;
   return `/jobs/${hit.id}`;
 }
 

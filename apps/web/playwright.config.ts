@@ -30,6 +30,7 @@ export default defineConfig({
         RAYWATCH_FIXTURE_TASKS: fixture("tasks_list_2_59.json"),
         RAYWATCH_FIXTURE_NODES: fixture("nodes.json"),
         RAYWATCH_FIXTURE_ACTORS: fixture("actors.json"),
+        RAYWATCH_FIXTURE_OBJECTS: fixture("objects.json"),
       },
     },
     {

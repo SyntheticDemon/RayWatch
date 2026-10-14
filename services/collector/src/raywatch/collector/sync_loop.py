@@ -10,12 +10,16 @@ from pathlib import Path
 import httpx
 from raywatch.adapter_ray.normalize_cluster import normalize_actors_payload, normalize_nodes_payload
 from raywatch.adapter_ray.normalize_jobs import normalize_jobs_payload
+from raywatch.adapter_ray.normalize_objects import normalize_objects_payload
 from raywatch.adapter_ray.normalize_tasks import normalize_tasks_payload, task_total_from_payload
+from raywatch.adapter_ray.parse_cluster_status import parse_resource_utilization
 from raywatch.adapter_ray.ray_client import (
     fetch_actors_json,
     fetch_all_tasks_json,
+    fetch_cluster_status_json,
     fetch_jobs_json,
     fetch_nodes_json,
+    fetch_objects_json,
 )
 from raywatch.engine.incremental_sync import augment_jobs_batch, augment_tasks_batch
 from raywatch.engine.live_cache import LiveCache
@@ -56,10 +60,16 @@ async def _apply_cluster_payload(
     live_cache: LiveCache,
     nodes_payload: dict | None,
     actors_payload: dict | None,
+    objects_payload: dict | None = None,
+    cluster_status_payload: dict | None = None,
 ) -> None:
     nodes = normalize_nodes_payload(nodes_payload or {})
     actors = normalize_actors_payload(actors_payload or {})
-    live_cache.set_cluster_snapshot(nodes, actors)
+    objects = normalize_objects_payload(objects_payload or {})
+    utilization = (
+        parse_resource_utilization(cluster_status_payload or {}) if cluster_status_payload else None
+    )
+    live_cache.set_cluster_snapshot(nodes, actors, objects, utilization)
 
 
 async def _apply_tasks_payload(
@@ -100,10 +110,12 @@ async def sync_active_jobs(live_cache: LiveCache) -> None:
             await _apply_tasks_payload(live_cache, task_payload, cluster_epoch)
         nodes_fixture = _cluster_fixture_path("NODES")
         actors_fixture = _cluster_fixture_path("ACTORS")
-        if nodes_fixture or actors_fixture:
+        objects_fixture = _cluster_fixture_path("OBJECTS")
+        if nodes_fixture or actors_fixture or objects_fixture:
             nodes_payload = load_json_fixture(nodes_fixture) if nodes_fixture else {}
             actors_payload = load_json_fixture(actors_fixture) if actors_fixture else {}
-            await _apply_cluster_payload(live_cache, nodes_payload, actors_payload)
+            objects_payload = load_json_fixture(objects_fixture) if objects_fixture else {}
+            await _apply_cluster_payload(live_cache, nodes_payload, actors_payload, objects_payload)
         after_live_sync(live_cache)
         return
 
@@ -124,7 +136,15 @@ async def sync_active_jobs(live_cache: LiveCache) -> None:
         async with httpx.AsyncClient() as client:
             nodes_payload = await fetch_nodes_json(client)
             actors_payload = await fetch_actors_json(client)
-        await _apply_cluster_payload(live_cache, nodes_payload, actors_payload)
+            objects_payload = await fetch_objects_json(client)
+            cluster_status_payload = await fetch_cluster_status_json(client)
+        await _apply_cluster_payload(
+            live_cache,
+            nodes_payload,
+            actors_payload,
+            objects_payload,
+            cluster_status_payload,
+        )
         after_live_sync(live_cache)
     except Exception:
         logger.exception("sync_active_jobs failed")

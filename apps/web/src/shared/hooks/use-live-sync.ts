@@ -1,7 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import type { InfiniteData } from "@tanstack/react-query";
+
 import type { JobResponse, JobSummary, SyncMeta, TaskSummary, TasksPage } from "@/shared/api/client";
+import { mergeJobRows } from "@/shared/lib/merge-jobs-preview";
+import { patchJobTasksQueryData } from "@/shared/lib/merge-task-previews";
 
 type LiveSyncMessage = {
   type?: string;
@@ -57,10 +61,9 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
                 { predicate: (q) => q.queryKey[0] === "jobs" },
                 (old: { items?: JobSummary[]; sync?: SyncMeta } | undefined) => {
                   if (!old?.items?.length) return old;
-                  const byId = new Map(preview.map((job) => [job.job_id, job]));
                   return {
                     ...old,
-                    items: old.items.map((job) => byId.get(job.job_id) ?? job),
+                    items: mergeJobRows(old.items, preview, { allowNewRows: true }),
                     sync,
                   };
                 },
@@ -71,6 +74,8 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
             queryClient.invalidateQueries({ queryKey: ["cluster-overview"] });
             queryClient.invalidateQueries({ queryKey: ["cluster-nodes"] });
             queryClient.invalidateQueries({ queryKey: ["cluster-actors"] });
+            queryClient.invalidateQueries({ queryKey: ["cluster-objects"] });
+            queryClient.invalidateQueries({ queryKey: ["cluster-utilization-history"] });
           } else if (message.job) {
             queryClient.setQueryData<JobResponse>(["job", jobId], (prev) => {
               const sync = message.sync ?? prev?.sync;
@@ -78,24 +83,10 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
               return { job: message.job!, sync };
             });
             const tasksPreview = message.tasks_preview;
-            if (tasksPreview?.length) {
-              queryClient.setQueriesData<TasksPage>(
-                { predicate: (q) => q.queryKey[0] === "job-tasks" && q.queryKey[1] === jobId },
-                (old) => {
-                  if (!old) return old;
-                  const byId = new Map(tasksPreview.map((task) => [task.task_id, task]));
-                  const merged = old.items.map((task) => byId.get(task.task_id) ?? task);
-                  for (const task of tasksPreview) {
-                    if (!merged.some((row) => row.task_id === task.task_id)) {
-                      merged.push(task);
-                    }
-                  }
-                  return {
-                    ...old,
-                    items: merged,
-                    sync: message.sync ?? old.sync,
-                  };
-                },
+            if (tasksPreview?.length && message.sync) {
+              queryClient.setQueriesData<TasksPage | InfiniteData<TasksPage>>(
+                { queryKey: ["job-tasks", jobId] },
+                (old) => patchJobTasksQueryData(old, tasksPreview, message.sync!),
               );
               for (const task of tasksPreview) {
                 queryClient.setQueryData(

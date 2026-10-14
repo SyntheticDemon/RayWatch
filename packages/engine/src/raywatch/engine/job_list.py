@@ -5,6 +5,7 @@ from __future__ import annotations
 import bisect
 from datetime import UTC, datetime
 
+from raywatch.engine.job_kind import job_id_matches_kind
 from raywatch.engine.job_snapshot_store import JobSnapshotStore
 from raywatch.engine.live_cache import LiveCache
 from raywatch.model.job import JobStatus, JobSummary
@@ -22,7 +23,10 @@ def _job_matches_filters(
     started_after: datetime | None,
     started_before: datetime | None,
     failed_within_hours: float | None,
+    job_kind: str | None = None,
 ) -> bool:
+    if not job_id_matches_kind(job.job_id, job_kind):
+        return False
     if status is not None and job.status != status:
         return False
     if started_after is not None and (job.started_at is None or job.started_at < started_after):
@@ -75,6 +79,7 @@ def list_jobs(
     started_after: datetime | None = None,
     started_before: datetime | None = None,
     failed_within_hours: float | None = None,
+    job_kind: str | None = None,
 ) -> tuple[list[JobSummary], str | None]:
     limit = min(max(limit, 1), 100)
     live_items: list[JobSummary] = []
@@ -89,6 +94,7 @@ def list_jobs(
             started_after=started_after,
             started_before=started_before,
             failed_within_hours=failed_within_hours,
+            job_kind=job_kind,
         )
         live_items.extend(page)
         if page_cursor is None:
@@ -107,6 +113,7 @@ def list_jobs(
                 started_after=started_after,
                 started_before=started_before,
                 failed_within_hours=failed_within_hours,
+                job_kind=job_kind,
             ):
                 continue
             summaries[archived.job_id] = archived.model_copy(update={"archived": True})

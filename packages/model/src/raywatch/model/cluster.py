@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -12,15 +14,36 @@ class NodeSummary(BaseModel):
     object_store_bytes_total: float | None = None
 
 
+class UtilizationSample(BaseModel):
+    recorded_at: datetime
+    cpu_used: float
+    cpu_total: float
+    memory_bytes_used: float
+    memory_bytes_total: float
+    object_store_bytes_used: float
+    object_store_bytes_total: float
+
+
+class ResourceUtilization(BaseModel):
+    cpu_used: float
+    cpu_total: float
+    memory_bytes_used: float
+    memory_bytes_total: float
+    object_store_bytes_used: float
+    object_store_bytes_total: float
+
+
 class ClusterOverview(BaseModel):
     nodes_total: int
     nodes_alive: int
     actors_total: int
+    objects_total: int
     cpu_total: float
     gpu_total: float
     memory_bytes_total: float
     job_count: int
     task_count: int
+    utilization: ResourceUtilization | None = None
 
 
 class ActorSummary(BaseModel):
@@ -30,3 +53,13 @@ class ActorSummary(BaseModel):
     job_id: str | None = None
     worker_id: str | None = None
     node_id: str | None = None
+
+
+class ObjectSummary(BaseModel):
+    object_id: str
+    object_size: int | None = None
+    reference_type: str | None = None
+    task_status: str | None = None
+    owner_type: str | None = None
+    pid: int | None = None
+    ip: str | None = None

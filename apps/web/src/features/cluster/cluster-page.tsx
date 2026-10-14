@@ -1,13 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import {
-  fetchClusterActors,
   fetchClusterNodes,
+  fetchClusterObjects,
   fetchClusterOverview,
+  fetchUtilizationHistory,
   triggerSync,
 } from "@/shared/api/client";
+import { ResourceUtilBars } from "@/features/cluster/resource-util-bars";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { Button } from "@/shared/ui/primitives";
 import { clusterBreadcrumbs } from "@/shared/ui/breadcrumb-trail";
@@ -32,9 +34,9 @@ export function ClusterPage() {
     return (nodeId: string) => nodeId === focusId;
   }, [focusKind, focusId]);
 
-  const actorMatchesFocus = useMemo(() => {
-    if (focusKind !== "actor" || !focusId) return () => false;
-    return (actorId: string) => actorId === focusId;
+  const objectMatchesFocus = useMemo(() => {
+    if (focusKind !== "object" || !focusId) return () => false;
+    return (objectId: string) => objectId === focusId;
   }, [focusKind, focusId]);
 
   const overviewQuery = useQuery({
@@ -49,9 +51,15 @@ export function ClusterPage() {
     refetchInterval: connected ? false : 8000,
   });
 
-  const actorsQuery = useQuery({
-    queryKey: ["cluster-actors"],
-    queryFn: () => fetchClusterActors(200),
+  const utilHistoryQuery = useQuery({
+    queryKey: ["cluster-utilization-history"],
+    queryFn: fetchUtilizationHistory,
+    refetchInterval: connected ? 5000 : 8000,
+  });
+
+  const objectsQuery = useQuery({
+    queryKey: ["cluster-objects"],
+    queryFn: () => fetchClusterObjects(200),
     refetchInterval: connected ? false : 8000,
   });
 
@@ -60,15 +68,15 @@ export function ClusterPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cluster-overview"] });
       queryClient.invalidateQueries({ queryKey: ["cluster-nodes"] });
-      queryClient.invalidateQueries({ queryKey: ["cluster-actors"] });
+      queryClient.invalidateQueries({ queryKey: ["cluster-objects"] });
     },
   });
 
   useEffect(() => {
     highlightRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [focusId, focusKind, nodesQuery.data, actorsQuery.data]);
+  }, [focusId, focusKind, nodesQuery.data, objectsQuery.data]);
 
-  const sync = overviewQuery.data?.sync ?? nodesQuery.data?.sync ?? actorsQuery.data?.sync;
+  const sync = overviewQuery.data?.sync ?? nodesQuery.data?.sync ?? objectsQuery.data?.sync;
   const overview = overviewQuery.data?.overview;
 
   return (
@@ -77,7 +85,10 @@ export function ClusterPage() {
       <header className="page-title-row">
         <div>
           <h1 className="page-title">Cluster</h1>
-          <p className="page-subtitle">Nodes, actors, and resource totals from the latest Ray sync</p>
+          <p className="page-subtitle">
+            Nodes, objects, and resource totals ·{" "}
+            <Link to="/actors" className="text-link">Actors tab</Link>
+          </p>
         </div>
         <div className="page-title-actions">
           <SyncStatus sync={sync} connected={connected} />
@@ -91,6 +102,13 @@ export function ClusterPage() {
           </Button>
         </div>
       </header>
+
+      {overview?.utilization && (
+        <ResourceUtilBars
+          utilization={overview.utilization}
+          history={utilHistoryQuery.data?.items}
+        />
+      )}
 
       {overview && (
         <div className="cluster-summary" role="region" aria-label="Cluster summary">
@@ -118,6 +136,10 @@ export function ClusterPage() {
           <div className="cluster-summary-card">
             <span className="cluster-summary-label">Actors</span>
             <span className="cluster-summary-value">{overview.actors_total}</span>
+          </div>
+          <div className="cluster-summary-card">
+            <span className="cluster-summary-label">Objects indexed</span>
+            <span className="cluster-summary-value">{overview.objects_total}</span>
           </div>
           <div className="cluster-summary-card">
             <span className="cluster-summary-label">Jobs indexed</span>
@@ -180,38 +202,38 @@ export function ClusterPage() {
 
         <section className="table-card">
           <header className="table-card-header">
-            <h2>Actors</h2>
-            <span className="table-card-count">{actorsQuery.data?.items.length ?? "—"}</span>
+            <h2>Objects</h2>
+            <span className="table-card-count">{objectsQuery.data?.items.length ?? "—"}</span>
           </header>
-          {actorsQuery.isLoading ? (
-            <p className="table-card-loading">Loading actors…</p>
-          ) : actorsQuery.error ? (
-            <p className="error-banner">Could not load actors.</p>
+          {objectsQuery.isLoading ? (
+            <p className="table-card-loading">Loading objects…</p>
+          ) : objectsQuery.error ? (
+            <p className="error-banner">Could not load objects.</p>
           ) : (
             <table className="simple-table">
               <thead>
                 <tr>
-                  <th>Actor ID</th>
-                  <th>Class</th>
-                  <th>State</th>
-                  <th>Job</th>
+                  <th>Object ID</th>
+                  <th>Size (B)</th>
+                  <th>Ref type</th>
+                  <th>Status</th>
+                  <th>Owner</th>
                 </tr>
               </thead>
               <tbody>
-                {actorsQuery.data?.items.map((actor) => (
+                {objectsQuery.data?.items.map((obj) => (
                   <tr
-                    key={actor.actor_id}
-                    ref={actorMatchesFocus(actor.actor_id) ? highlightRef : undefined}
-                    className={actorMatchesFocus(actor.actor_id) ? "row-highlight" : undefined}
+                    key={obj.object_id}
+                    ref={objectMatchesFocus(obj.object_id) ? highlightRef : undefined}
+                    className={objectMatchesFocus(obj.object_id) ? "row-highlight" : undefined}
                   >
-                    <td className="mono cell-ellipsis" title={actor.actor_id}>
-                      {actor.actor_id}
+                    <td className="mono cell-ellipsis" title={obj.object_id}>
+                      {obj.object_id.length > 20 ? `${obj.object_id.slice(0, 20)}…` : obj.object_id}
                     </td>
-                    <td>{actor.class_name ?? "—"}</td>
-                    <td>
-                      <span className="badge badge-running">{actor.state ?? "—"}</span>
-                    </td>
-                    <td className="mono">{actor.job_id ?? "—"}</td>
+                    <td>{obj.object_size ?? "—"}</td>
+                    <td>{obj.reference_type ?? "—"}</td>
+                    <td>{obj.task_status ?? "—"}</td>
+                    <td>{obj.owner_type ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

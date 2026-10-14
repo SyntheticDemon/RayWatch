@@ -14,6 +14,14 @@ async def test_list_jobs_from_fixture(api_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_list_jobs_job_kind_query(api_client: AsyncClient) -> None:
+    response = await api_client.get("/jobs", params={"job_kind": "submission"})
+    assert response.status_code == 200
+    bad = await api_client.get("/jobs", params={"job_kind": "invalid"})
+    assert bad.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_get_job_detail(api_client: AsyncClient) -> None:
     response = await api_client.get("/jobs/01000000")
     assert response.status_code == 200

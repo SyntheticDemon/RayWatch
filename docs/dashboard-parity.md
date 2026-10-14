@@ -26,21 +26,21 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Job list (status, id, entrypoint, timing) | `GET /jobs` + jobs table | **done** | Cursor pagination, filters, `include_archived` |
+| Job list (status, id, entrypoint, timing) | `GET /jobs` + jobs table | **done** | Cursor pagination; URL-persisted search; **1h / 24h / 7d** time presets; per-column filters; submission vs internal kind |
 | Job detail / status | `GET /jobs/{id}` | **done** | Sync honesty fields |
 | Stop / terminate job | `POST /jobs/{id}/stop` | **done** | Best-effort Ray HTTP |
 | Submit job from UI | — | **n/a** | Ops view; use Ray CLI/SDK |
-| Driver logs (job) | `GET /jobs/{id}/logs` + LogViewer | **partial** | Incremental tail, filters, download; `?log_line=` deep links |
-| Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **partial** | Live Ray ingest + incremental remove when task page is complete |
+| Driver logs (job) | `GET /jobs/{id}/logs` + LogViewer | **close** | UI tails ~400 lines then `after_offset` poll; short server log-body cache on poll; WS-triggered tail; filters; `?log_line=` links |
+| Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **close** | **Nested runs** on job detail; `/internal-runs` hub; cursor + “Load more”; WS `tasks_preview` |
 
 ### Tasks & entities
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Task detail | `GET /tasks/{id}` + task drawer/page | **partial** | Shared `TaskInspector` + attempt timeline |
+| Task detail | `GET /tasks/{id}` + task drawer/page | **close** | `TaskInspector` + timeline; job/parent links; WS refresh on `/tasks/:id` |
 | Worker / node drill-down | Worker card + actor card + cluster links | **partial** | Actor → node one-hop from live index |
-| Actors, objects, global state browser | `GET /cluster/actors` + search | **partial** | No full object browser |
-| Metrics / charts / GPU views | — | **gap** | Out of v1; not blocking jobs hub |
+| Actors, objects, global state browser | `GET /cluster/actors` + **`/actors`** + objects on `/cluster` | **close** | Dedicated **Actors** nav tab; objects on cluster; palette links; not full lineage browser |
+| Metrics / charts / GPU views | Utilization bars + sync-history sparklines | **close** | Recent trend (~4 min); not full Grafana |
 
 ### Live & freshness
 
@@ -48,14 +48,14 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 |--------------------------|----------|--------|-------|
 | Auto-refresh job list | Sync loop + TanStack Query | **done** | |
 | Stale / disconnected indicator | Sync banner + `/freshness` | **done** | |
-| WebSocket live patches | `WS /ws/live` | **partial** | Hub `jobs_preview`; job scope sends `job` + `tasks_preview` |
+| WebSocket live patches | `WS /ws/live` | **close** | Hub `jobs_preview` upserts rows on first page; job scope sends `job` + `tasks_preview` |
 | Manual resync | `POST /sync/trigger` | **done** | |
 
 ### Search & navigation
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Global search by id | `GET /search` + command palette | **partial** | Jobs, tasks, actors, nodes; ⌘K nav shortcuts; cluster row highlight |
+| Global search by id | `GET /search` + command palette | **close** | v1: jobs, tasks, actors, nodes by id/name; no object ref search |
 | Deep links | React routes | **done** | `/jobs/:id`, tasks |
 | Breadcrumbs | Shared `Breadcrumbs` + job/task/cluster trails | **done** | Jobs → entrypoint/job → task name |
 
@@ -63,7 +63,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **partial** | CPU/GPU/memory totals + node table; no utilization charts |
+| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **close** | Totals + utilization bars + sparklines; nodes + objects tables (actors moved to `/actors`) |
 | Serve / Train dashboards | — | **n/a** | Separate products |
 
 ## API coverage map (tests)
@@ -81,15 +81,23 @@ Contract and behavior tests should stay aligned with this list. Primary file: `t
 | `GET /search` | yes | — |
 | `WS /ws/live` | yes | — |
 | `GET /tasks/{id}` | yes | — |
-| `GET /cluster/overview`, `GET /cluster/nodes`, `GET /cluster/actors` | yes | — |
+| `GET /cluster/overview`, `GET /cluster/nodes`, `GET /cluster/actors`, `GET /cluster/objects` | yes | — |
+
+## v1 boundary (not full Ray dashboard)
+
+RayWatch v1 omits **historical metrics charts** (Grafana-style) and **multi-hop object lineage** (see [frontend-features.md](./frontend-features.md) “Explicitly not in frontend v1”). Everything else in the matrix above targets **done** or **close** for operator workflows (jobs, tasks, logs, cluster entities, search, live sync).
+
+## Evidence (live Ray, 2026-10-14)
+
+- `make verify-live` — integration tests, task-indexed demo job, logs curl, **warm p95 beats Ray** at scales 10/25 (`benchmark-results/jobs-list-latency.md`).
+- CI: `.github/workflows/verify-live.yml` (nightly + manual) runs the same script when Docker is available.
 
 ## Next engineering priorities (parity order)
 
-1. **Warm benchmark column** — published in `jobs-list-latency.md`; gate with `make benchmark-ray-assert` when Ray head is up.
-2. **Live task ingest** — close task tree gap vs dashboard on real clusters (`M2` in [mvp-scope.md](./mvp-scope.md)).
-3. **Log tail UX** — optional WS log chunks; today sync-triggered HTTP tail + poll.
-4. **Utilization charts / object browser** — Ray metrics and global state remain out of v1 scope unless product expands.
-5. **CI verify-live** — optional nightly `make verify-live` when Docker Ray is available.
+1. **Object browser / metrics charts** — explicit **gap** vs full Ray dashboard; not in [frontend-features.md](./frontend-features.md) v1.
+2. **Task tree on huge clusters** — paginated task API exists; UI lazy-load for very deep trees.
+3. **Log WS chunks** — optional; HTTP incremental tail + sync-triggered tail is v1.
+4. **Playwright on live Ray** — e2e still uses fixture API; add optional live job smoke behind env flag.
 
 ## Related
 

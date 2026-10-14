@@ -23,7 +23,7 @@ test("fixture job logs panel shows content and toolbar works", async ({ page }) 
 
 test("fixture job shows task tree entries", async ({ page }) => {
   await page.goto("/jobs/01000000");
-  await expect(page.getByRole("heading", { name: "Tasks" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nested runs" })).toBeVisible();
   await expect(page.getByText("train_step")).toBeVisible();
 });
 

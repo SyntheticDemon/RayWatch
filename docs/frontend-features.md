@@ -6,7 +6,7 @@ Planned UI capabilities for RayWatch. **v1** = first shippable slice; **later** 
 
 | Feature | Phase | Description |
 |---------|-------|-------------|
-| App shell (header, nav) | v1 | Jobs as home; minimal chrome, dark default |
+| App shell (header, nav) | v1 | Jobs home; **Actors**, **Cluster**, **Internal runs** tabs |
 | Command palette search (⌘K) | v1 | Jump by job / task / actor / worker / object id |
 | URL deep links | v1 | Shareable `/jobs/:id`, `/jobs/:id?task=:taskId` |
 | Stale / degraded banner | v1 | When ingest paused or data older than threshold |
@@ -19,7 +19,7 @@ Planned UI capabilities for RayWatch. **v1** = first shippable slice; **later** 
 |---------|-------|-------------|
 | Virtualized jobs table | v1 | Server cursor pagination; never fetch all jobs |
 | Column sort (server) | v1 | Started, duration, status, task counts |
-| Filters | v1 | Status (running/failed/succeeded), time range, text search |
+| Filters | v1 | Status chips, **last 1h / 24h / 7d** presets + custom range, debounced text search (URL state), per-column filters |
 | Quick views | v1 | Tabs or chips: **Running**, **Failed (24h)**, **All** (cursor) |
 | Row summary | v1 | Status badge, duration, error one-liner, task run/fail counts |
 | Bulk select | later | Multi-select for tag/export; bulk stop only if API supports safely |

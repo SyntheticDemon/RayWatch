@@ -127,15 +127,50 @@ export type ActorsPage = {
   sync: SyncMeta;
 };
 
+export type ObjectSummary = {
+  object_id: string;
+  object_size: number | null;
+  reference_type: string | null;
+  task_status: string | null;
+  owner_type: string | null;
+  pid: number | null;
+  ip: string | null;
+};
+
+export type ObjectsPage = {
+  items: ObjectSummary[];
+  sync: SyncMeta;
+};
+
+export type ResourceUtilization = {
+  cpu_used: number;
+  cpu_total: number;
+  memory_bytes_used: number;
+  memory_bytes_total: number;
+  object_store_bytes_used: number;
+  object_store_bytes_total: number;
+};
+
+export type UtilizationSample = ResourceUtilization & {
+  recorded_at: string;
+};
+
+export type UtilizationHistoryResponse = {
+  items: UtilizationSample[];
+  sync: SyncMeta;
+};
+
 export type ClusterOverview = {
   nodes_total: number;
   nodes_alive: number;
   actors_total: number;
+  objects_total: number;
   cpu_total: number;
   gpu_total: number;
   memory_bytes_total: number;
   job_count: number;
   task_count: number;
+  utilization: ResourceUtilization | null;
 };
 
 export type ActorResponse = {
@@ -158,6 +193,7 @@ export type JobsQuery = {
   started_after?: string;
   started_before?: string;
   include_archived?: boolean;
+  job_kind?: "submission" | "internal";
 };
 
 export type SyncTriggerResponse = {
@@ -219,12 +255,20 @@ export function fetchClusterOverview(): Promise<ClusterOverviewResponse> {
   return fetchJson<ClusterOverviewResponse>("/cluster/overview");
 }
 
+export function fetchUtilizationHistory(): Promise<UtilizationHistoryResponse> {
+  return fetchJson<UtilizationHistoryResponse>("/cluster/utilization/history");
+}
+
 export function fetchClusterNodes(): Promise<NodesPage> {
   return fetchJson<NodesPage>("/cluster/nodes");
 }
 
 export function fetchClusterActors(limit = 200): Promise<ActorsPage> {
   return fetchJson<ActorsPage>(`/cluster/actors${qs({ limit })}`);
+}
+
+export function fetchClusterObjects(limit = 200): Promise<ObjectsPage> {
+  return fetchJson<ObjectsPage>(`/cluster/objects${qs({ limit })}`);
 }
 
 export function fetchClusterActor(actorId: string): Promise<ActorResponse> {
