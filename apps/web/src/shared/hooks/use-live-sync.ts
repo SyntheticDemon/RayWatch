@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { InfiniteData } from "@tanstack/react-query";
 
 import type { JobResponse, JobSummary, SyncMeta, TaskSummary, TasksPage } from "@/shared/api/client";
+import { mergeJobRows } from "@/shared/lib/merge-jobs-preview";
 import { patchJobTasksQueryData } from "@/shared/lib/merge-task-previews";
 
 type LiveSyncMessage = {
@@ -60,10 +61,9 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
                 { predicate: (q) => q.queryKey[0] === "jobs" },
                 (old: { items?: JobSummary[]; sync?: SyncMeta } | undefined) => {
                   if (!old?.items?.length) return old;
-                  const byId = new Map(preview.map((job) => [job.job_id, job]));
                   return {
                     ...old,
-                    items: old.items.map((job) => byId.get(job.job_id) ?? job),
+                    items: mergeJobRows(old.items, preview, { allowNewRows: true }),
                     sync,
                   };
                 },
