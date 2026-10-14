@@ -749,6 +749,58 @@ a:hover {
   line-height: 1.6;
 }
 
+.log-viewer-lines {
+  padding: 0.5rem 0;
+}
+
+.log-line {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  min-height: 1.35em;
+}
+
+.log-line-highlight {
+  background: var(--accent-muted);
+}
+
+.log-lineno,
+.log-lineno-static {
+  flex: 0 0 2.5rem;
+  text-align: right;
+  color: var(--text-tertiary);
+  user-select: none;
+}
+
+.log-lineno {
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.log-lineno:hover {
+  color: var(--accent);
+}
+
+.log-line-text {
+  flex: 1;
+  white-space: pre;
+}
+
+.log-wrap .log-line-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-empty {
+  margin: 0;
+  padding: 0 1rem;
+  color: var(--text-tertiary);
+}
+
 .log-panel .control,
 .log-toolbar .control {
   height: 2rem;

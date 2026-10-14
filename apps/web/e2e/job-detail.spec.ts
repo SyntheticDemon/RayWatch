@@ -10,14 +10,15 @@ test("fixture job shows breadcrumb trail", async ({ page }) => {
 test("fixture job logs panel shows content and toolbar works", async ({ page }) => {
   await page.goto("/jobs/01000000");
   await expect(page.getByRole("heading", { name: "Job logs" })).toBeVisible();
-  await expect(page.locator(".log-viewer")).toContainText("train.py");
+  await expect(page.locator(".log-viewer-lines")).toContainText("train.py");
+  await expect(page.getByRole("button", { name: "1" }).first()).toBeVisible();
 
   await page.getByRole("button", { name: "Pause tail" }).click();
   await expect(page.getByText("Tail paused")).toBeVisible();
 
   await page.getByLabel("Filter log lines").fill("epoch");
-  await expect(page.locator(".log-viewer")).toContainText("epoch");
-  await expect(page.locator(".log-viewer")).not.toContainText("raywatch-fixture");
+  await expect(page.locator(".log-viewer-lines")).toContainText("epoch");
+  await expect(page.locator(".log-viewer-lines")).not.toContainText("raywatch-fixture");
 });
 
 test("fixture job shows task tree entries", async ({ page }) => {

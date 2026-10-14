@@ -24,6 +24,8 @@ export function JobDetailPage() {
   const { jobId = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTaskId = searchParams.get("task");
+  const logLineRaw = searchParams.get("log_line");
+  const highlightLogLine = logLineRaw ? Number.parseInt(logLineRaw, 10) : null;
   const [stopConfirm, setStopConfirm] = useState(false);
   const [logsPaused, setLogsPaused] = useState(false);
   const queryClient = useQueryClient();
@@ -190,10 +192,13 @@ export function JobDetailPage() {
             text={filterLogsForTask(logText, selectedTaskId)}
             errorMessage={logError}
             pollPaused={logsPaused}
-            followTail={!logsPaused}
+            followTail={!logsPaused && !highlightLogLine}
             onTogglePause={() => setLogsPaused((p) => !p)}
             onRefresh={() => refreshLogs()}
             isRefreshing={logsFetching}
+            deepLinkPath={`/jobs/${jobId}`}
+            deepLinkQuery={selectedTaskId ? { task: selectedTaskId } : undefined}
+            highlightLine={highlightLogLine}
           />
         )}
       </section>
