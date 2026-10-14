@@ -6,7 +6,14 @@ export type PaletteNavItem =
 
 export const PALETTE_COMMANDS: Array<{ id: string; label: string; path: string; keywords: string }> = [
   { id: "jobs", label: "Go to Jobs", path: "/", keywords: "jobs home list" },
-  { id: "cluster", label: "Go to Cluster", path: "/cluster", keywords: "cluster nodes actors" },
+  { id: "actors", label: "Go to Actors", path: "/actors", keywords: "actors ray actor" },
+  { id: "cluster", label: "Go to Cluster", path: "/cluster", keywords: "cluster nodes objects" },
+  {
+    id: "internal-runs",
+    label: "Go to Internal runs",
+    path: "/internal-runs",
+    keywords: "internal driver nested runs",
+  },
 ];
 
 export function pathForSearchHit(hit: SearchHit): string {
