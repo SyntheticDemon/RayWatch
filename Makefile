@@ -6,9 +6,11 @@ test-e2e: install-e2e
 install-e2e:
 	cd apps/web && npx playwright install chromium
 
-test-all: test lint typecheck
+test-all: test lint typecheck perf
 	cd apps/web && npm run test
 	$(MAKE) test-e2e
+
+ci: test-all coverage
 
 verify-live:
 	bash scripts/verify_live_stack.sh

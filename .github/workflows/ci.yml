@@ -16,6 +16,7 @@ jobs:
       - run: uv sync --all-packages
       - run: make lint
       - run: make typecheck
+      - run: make perf
       - run: make coverage
 
   web:

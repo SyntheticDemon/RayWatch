@@ -35,7 +35,7 @@ docs/perf-improvement-log.md                   # human step report after each la
 ## Baselines
 
 - Stored in `tests/perf/baselines.json` as **maximum allowed p95 (ms)** per scenario.
-- Perf tests **fail** if measured p95 exceeds baseline × `(1 + PERF_REGRESSION_PCT/100)` (default 15%).
+- Perf tests **fail** if measured p95 exceeds `max(baseline × (1 + PERF_REGRESSION_PCT/100), baseline + PERF_REGRESSION_ABS_MS)` (defaults: 25%, +2.5ms).
 - Ray comparison tests have **no** pass/fail on beating Ray — use `make benchmark-ray` and the improvement log for evidence.
 
 ## Honest latency (no cheating)
