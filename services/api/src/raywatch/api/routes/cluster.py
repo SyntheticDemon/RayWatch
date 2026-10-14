@@ -8,6 +8,7 @@ from raywatch.model.api_cluster_dto import (
     NodesPage,
     ObjectResponse,
     ObjectsPage,
+    UtilizationHistoryResponse,
 )
 
 router = APIRouter(prefix="/cluster", tags=["cluster"])
@@ -71,3 +72,11 @@ def get_object(object_id: str) -> ObjectResponse:
     if obj is None:
         raise _OBJECT_NOT_FOUND
     return ObjectResponse(object=obj, sync=live_cache.sync_meta())
+
+
+@router.get("/utilization/history", response_model=UtilizationHistoryResponse)
+def utilization_history() -> UtilizationHistoryResponse:
+    return UtilizationHistoryResponse(
+        items=live_cache.utilization_history(),
+        sync=live_cache.sync_meta(),
+    )

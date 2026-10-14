@@ -151,6 +151,15 @@ export type ResourceUtilization = {
   object_store_bytes_total: number;
 };
 
+export type UtilizationSample = ResourceUtilization & {
+  recorded_at: string;
+};
+
+export type UtilizationHistoryResponse = {
+  items: UtilizationSample[];
+  sync: SyncMeta;
+};
+
 export type ClusterOverview = {
   nodes_total: number;
   nodes_alive: number;
@@ -243,6 +252,10 @@ export function searchEntities(q: string, limit = 20): Promise<SearchResponse> {
 
 export function fetchClusterOverview(): Promise<ClusterOverviewResponse> {
   return fetchJson<ClusterOverviewResponse>("/cluster/overview");
+}
+
+export function fetchUtilizationHistory(): Promise<UtilizationHistoryResponse> {
+  return fetchJson<UtilizationHistoryResponse>("/cluster/utilization/history");
 }
 
 export function fetchClusterNodes(): Promise<NodesPage> {

@@ -40,7 +40,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Task detail | `GET /tasks/{id}` + task drawer/page | **partial** | Shared `TaskInspector` + attempt timeline |
 | Worker / node drill-down | Worker card + actor card + cluster links | **partial** | Actor → node one-hop from live index |
 | Actors, objects, global state browser | `GET /cluster/actors` + `GET /cluster/objects` + search | **partial** | Indexed object table (Ray cap); not full lineage browser |
-| Metrics / charts / GPU views | Cluster utilization bars (`cluster_status`) | **partial** | Snapshot CPU/memory/object-store; no time-series charts |
+| Metrics / charts / GPU views | Utilization bars + sync-history sparklines | **close** | Recent trend (~4 min); not full Grafana |
 
 ### Live & freshness
 

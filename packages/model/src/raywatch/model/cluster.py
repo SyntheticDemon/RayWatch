@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -10,6 +12,16 @@ class NodeSummary(BaseModel):
     gpu_total: float | None = None
     memory_bytes_total: float | None = None
     object_store_bytes_total: float | None = None
+
+
+class UtilizationSample(BaseModel):
+    recorded_at: datetime
+    cpu_used: float
+    cpu_total: float
+    memory_bytes_used: float
+    memory_bytes_total: float
+    object_store_bytes_used: float
+    object_store_bytes_total: float
 
 
 class ResourceUtilization(BaseModel):

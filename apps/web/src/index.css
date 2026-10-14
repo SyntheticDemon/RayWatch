@@ -1036,10 +1036,24 @@ a:hover {
   background: var(--surface);
 }
 
+.util-bars-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
 .util-bars-title {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 0.9375rem;
   font-weight: 600;
+}
+
+.util-sparklines {
+  display: flex;
+  gap: 0.5rem;
+  color: var(--accent);
 }
 
 .util-bar-row {

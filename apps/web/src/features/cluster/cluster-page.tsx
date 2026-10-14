@@ -7,6 +7,7 @@ import {
   fetchClusterNodes,
   fetchClusterObjects,
   fetchClusterOverview,
+  fetchUtilizationHistory,
   triggerSync,
 } from "@/shared/api/client";
 import { ResourceUtilBars } from "@/features/cluster/resource-util-bars";
@@ -62,6 +63,12 @@ export function ClusterPage() {
     refetchInterval: connected ? false : 8000,
   });
 
+  const utilHistoryQuery = useQuery({
+    queryKey: ["cluster-utilization-history"],
+    queryFn: fetchUtilizationHistory,
+    refetchInterval: connected ? 5000 : 8000,
+  });
+
   const objectsQuery = useQuery({
     queryKey: ["cluster-objects"],
     queryFn: () => fetchClusterObjects(200),
@@ -110,7 +117,12 @@ export function ClusterPage() {
         </div>
       </header>
 
-      {overview?.utilization && <ResourceUtilBars utilization={overview.utilization} />}
+      {overview?.utilization && (
+        <ResourceUtilBars
+          utilization={overview.utilization}
+          history={utilHistoryQuery.data?.items}
+        />
+      )}
 
       {overview && (
         <div className="cluster-summary" role="region" aria-label="Cluster summary">

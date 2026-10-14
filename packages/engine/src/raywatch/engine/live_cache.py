@@ -10,6 +10,7 @@ from raywatch.model.cluster import (
     NodeSummary,
     ObjectSummary,
     ResourceUtilization,
+    UtilizationSample,
 )
 from raywatch.model.freshness import SyncMeta
 from raywatch.model.ingest import IngestBatch, IngestOp
@@ -35,6 +36,7 @@ class LiveCacheState:
     actors: dict[str, ActorSummary] = field(default_factory=dict)
     objects: dict[str, ObjectSummary] = field(default_factory=dict)
     utilization: ResourceUtilization | None = None
+    utilization_history: list[UtilizationSample] = field(default_factory=list)
 
 
 class LiveCache:
@@ -345,6 +347,9 @@ class LiveCache:
         self._state.objects = {o.object_id: o for o in (objects or [])}
         if utilization is not None:
             self._state.utilization = utilization
+            sample = UtilizationSample(recorded_at=_utc_now(), **utilization.model_dump())
+            history = [*self._state.utilization_history, sample]
+            self._state.utilization_history = history[-48:]
 
     def list_nodes(self) -> list[NodeSummary]:
         return sorted(self._state.nodes.values(), key=lambda n: n.node_id)
@@ -386,3 +391,6 @@ class LiveCache:
 
     def get_object(self, object_id: str) -> ObjectSummary | None:
         return self._state.objects.get(object_id)
+
+    def utilization_history(self) -> list[UtilizationSample]:
+        return list(self._state.utilization_history)

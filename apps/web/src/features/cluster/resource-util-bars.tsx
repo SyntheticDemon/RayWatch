@@ -1,7 +1,9 @@
-import type { ResourceUtilization } from "@/shared/api/client";
+import type { ResourceUtilization, UtilizationSample } from "@/shared/api/client";
+import { Sparkline } from "@/shared/ui/sparkline";
 
 type ResourceUtilBarsProps = {
   utilization: ResourceUtilization;
+  history?: UtilizationSample[];
 };
 
 function pct(used: number, total: number): number {
@@ -24,11 +26,23 @@ function Bar({ label, used, total, format }: { label: string; used: number; tota
   );
 }
 
-export function ResourceUtilBars({ utilization }: ResourceUtilBarsProps) {
+export function ResourceUtilBars({ utilization, history = [] }: ResourceUtilBarsProps) {
   const gib = (n: number) => `${(n / 1024 ** 3).toFixed(2)} GiB`;
+  const cpuTrend = history.map((s) => (s.cpu_total > 0 ? s.cpu_used / s.cpu_total : 0));
+  const memTrend = history.map((s) =>
+    s.memory_bytes_total > 0 ? s.memory_bytes_used / s.memory_bytes_total : 0,
+  );
   return (
     <section className="util-bars" aria-label="Cluster resource utilization">
-      <h2 className="util-bars-title">Resource utilization</h2>
+      <div className="util-bars-header">
+        <h2 className="util-bars-title">Resource utilization</h2>
+        {cpuTrend.length >= 2 && (
+          <div className="util-sparklines">
+            <Sparkline values={cpuTrend} label="CPU utilization trend" />
+            <Sparkline values={memTrend} label="Memory utilization trend" />
+          </div>
+        )}
+      </div>
       <Bar label="CPU" used={utilization.cpu_used} total={utilization.cpu_total} format={(n) => n.toFixed(1)} />
       <Bar
         label="Memory"

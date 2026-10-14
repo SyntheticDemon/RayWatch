@@ -1,5 +1,11 @@
 from pydantic import BaseModel
-from raywatch.model.cluster import ActorSummary, ClusterOverview, NodeSummary, ObjectSummary
+from raywatch.model.cluster import (
+    ActorSummary,
+    ClusterOverview,
+    NodeSummary,
+    ObjectSummary,
+    UtilizationSample,
+)
 from raywatch.model.freshness import SyncMeta
 
 
@@ -35,4 +41,9 @@ class ObjectsPage(BaseModel):
 
 class ObjectResponse(BaseModel):
     object: ObjectSummary
+    sync: SyncMeta
+
+
+class UtilizationHistoryResponse(BaseModel):
+    items: list[UtilizationSample]
     sync: SyncMeta
