@@ -14,20 +14,25 @@ export type ColumnFilters = {
 
 const DEFAULT_COLUMNS: ColumnFilters = { jobId: "", status: "", entrypoint: "" };
 
-function presetRange(preset: TimePreset): { after: string; before: string } {
-  if (preset === "all") return { after: "", before: "" };
-  const now = new Date();
-  const before = "";
+/** Compute API window at fetch time — not on every React render (avoids refetch loops). */
+export function apiStartedAfter(timePreset: TimePreset, afterParam: string): string | undefined {
+  if (timePreset === "all") return undefined;
+  if (timePreset === "custom") return afterParam || undefined;
   const ms =
-    preset === "1h"
+    timePreset === "1h"
       ? 60 * 60 * 1000
-      : preset === "24h"
+      : timePreset === "24h"
         ? 24 * 60 * 60 * 1000
-        : preset === "7d"
+        : timePreset === "7d"
           ? 7 * 24 * 60 * 60 * 1000
           : 0;
-  const after = new Date(now.getTime() - ms).toISOString();
-  return { after, before };
+  if (!ms) return undefined;
+  return new Date(Date.now() - ms).toISOString();
+}
+
+export function apiStartedBefore(timePreset: TimePreset, beforeParam: string): string | undefined {
+  if (timePreset !== "custom") return undefined;
+  return beforeParam || undefined;
 }
 
 export function isSubmissionJob(jobId: string): boolean {
@@ -47,12 +52,8 @@ export function useJobsHubFilters() {
   const jobKind = (params.get("kind") as JobKind) || "all";
   const timePreset = (params.get("period") as TimePreset) || "all";
 
-  const startedAfterParam = params.get("after") ?? "";
-  const startedBeforeParam = params.get("before") ?? "";
-  const preset = presetRange(timePreset);
-  const startedAfter =
-    timePreset === "custom" ? startedAfterParam : timePreset === "all" ? "" : preset.after;
-  const startedBefore = timePreset === "custom" ? startedBeforeParam : "";
+  const startedAfter = params.get("after") ?? "";
+  const startedBefore = params.get("before") ?? "";
 
   const columnFilters: ColumnFilters = useMemo(
     () => ({
