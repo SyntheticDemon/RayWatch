@@ -1,0 +1,68 @@
+[project]
+name = "raywatch"
+version = "0.1.0"
+description = "Operations dashboard and retained execution state for Ray clusters"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[tool.uv.workspace]
+members = [
+    "packages/model",
+    "packages/engine",
+    "packages/adapter-ray",
+    "services/api",
+    "services/collector",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "pyright>=1.1",
+    "httpx>=0.28",
+    "raywatch-model",
+    "raywatch-engine",
+    "raywatch-adapter-ray",
+    "raywatch-api",
+    "raywatch-collector",
+]
+
+[tool.uv.sources]
+raywatch-model = { workspace = true }
+raywatch-engine = { workspace = true }
+raywatch-adapter-ray = { workspace = true }
+raywatch-api = { workspace = true }
+raywatch-collector = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [
+    "packages/model/src",
+    "packages/engine/src",
+    "packages/adapter-ray/src",
+    "services/api/src",
+    "services/collector/src",
+]
+asyncio_mode = "auto"
+markers = [
+    "integration: requires Ray via Docker compose",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["packages", "services", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pyright]
+include = ["packages/**/src", "services/**/src", "tests"]
+exclude = ["**/__pycache__", "apps/web"]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
