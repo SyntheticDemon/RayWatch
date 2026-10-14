@@ -55,7 +55,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Global search by id | `GET /search` + command palette | **partial** | Jobs, tasks, actors, nodes; ⌘K nav shortcuts; cluster row highlight |
+| Global search by id | `GET /search` + command palette | **close** | v1: jobs, tasks, actors, nodes by id/name; no object ref search |
 | Deep links | React routes | **done** | `/jobs/:id`, tasks |
 | Breadcrumbs | Shared `Breadcrumbs` + job/task/cluster trails | **done** | Jobs → entrypoint/job → task name |
 
@@ -83,13 +83,17 @@ Contract and behavior tests should stay aligned with this list. Primary file: `t
 | `GET /tasks/{id}` | yes | — |
 | `GET /cluster/overview`, `GET /cluster/nodes`, `GET /cluster/actors` | yes | — |
 
+## Evidence (live Ray, 2026-10-14)
+
+- `make verify-live` — integration tests, task-indexed demo job, logs curl, **warm p95 beats Ray** at scales 10/25 (`benchmark-results/jobs-list-latency.md`).
+- CI: `.github/workflows/verify-live.yml` (nightly + manual) runs the same script when Docker is available.
+
 ## Next engineering priorities (parity order)
 
-1. **Warm benchmark column** — published in `jobs-list-latency.md`; gate with `make benchmark-ray-assert` when Ray head is up.
-2. **Live task ingest** — close task tree gap vs dashboard on real clusters (`M2` in [mvp-scope.md](./mvp-scope.md)).
-3. **Log tail UX** — optional WS log chunks; today sync-triggered HTTP tail + poll.
-4. **Utilization charts / object browser** — Ray metrics and global state remain out of v1 scope unless product expands.
-5. **CI verify-live** — optional nightly `make verify-live` when Docker Ray is available.
+1. **Object browser / metrics charts** — explicit **gap** vs full Ray dashboard; not in [frontend-features.md](./frontend-features.md) v1.
+2. **Task tree on huge clusters** — paginated task API exists; UI lazy-load for very deep trees.
+3. **Log WS chunks** — optional; HTTP incremental tail + sync-triggered tail is v1.
+4. **Playwright on live Ray** — e2e still uses fixture API; add optional live job smoke behind env flag.
 
 ## Related
 
