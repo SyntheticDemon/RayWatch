@@ -26,12 +26,19 @@ def normalize_nodes_payload(payload: dict[str, Any]) -> list[NodeSummary]:
         node_id = str(row.get("node_id") or row.get("NodeID") or row.get("id") or "")
         if not node_id:
             continue
+        resources = row.get("resources_total") or {}
+        cpu = resources.get("CPU") if isinstance(resources, dict) else None
+        memory = resources.get("memory") if isinstance(resources, dict) else None
+        object_store = resources.get("object_store_memory") if isinstance(resources, dict) else None
         nodes.append(
             NodeSummary(
                 node_id=node_id,
                 hostname=str(row.get("node_name") or row.get("hostname") or "") or None,
                 state=str(row.get("state") or row.get("State") or "") or None,
                 is_head=bool(row.get("is_head_node") or row.get("is_head")),
+                cpu_total=float(cpu) if cpu is not None else None,
+                memory_bytes_total=float(memory) if memory is not None else None,
+                object_store_bytes_total=float(object_store) if object_store is not None else None,
             )
         )
     return nodes

@@ -45,6 +45,9 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
           onSyncRef.current?.();
           if (!jobId) {
             queryClient.invalidateQueries({ queryKey: ["jobs"] });
+            queryClient.invalidateQueries({ queryKey: ["cluster-overview"] });
+            queryClient.invalidateQueries({ queryKey: ["cluster-nodes"] });
+            queryClient.invalidateQueries({ queryKey: ["cluster-actors"] });
           } else if (message.job) {
             queryClient.setQueryData<JobResponse>(["job", jobId], (prev) => {
               const sync = message.sync ?? prev?.sync;

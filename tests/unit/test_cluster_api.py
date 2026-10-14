@@ -32,3 +32,10 @@ async def test_cluster_nodes_and_actors_from_fixtures(
     one = await api_client.get("/cluster/actors/actor-demo-1")
     assert one.status_code == 200
     assert one.json()["actor"]["class_name"] == "Counter"
+
+    overview = await api_client.get("/cluster/overview")
+    assert overview.status_code == 200
+    body = overview.json()["overview"]
+    assert body["nodes_total"] == 1
+    assert body["actors_total"] == 1
+    assert body["job_count"] >= 1

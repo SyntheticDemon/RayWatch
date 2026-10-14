@@ -4,7 +4,7 @@ import bisect
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from raywatch.model.cluster import ActorSummary, NodeSummary
+from raywatch.model.cluster import ActorSummary, ClusterOverview, NodeSummary
 from raywatch.model.freshness import SyncMeta
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus, JobSummary
@@ -289,6 +289,21 @@ class LiveCache:
 
     def list_nodes(self) -> list[NodeSummary]:
         return sorted(self._state.nodes.values(), key=lambda n: n.node_id)
+
+    def cluster_overview(self) -> ClusterOverview:
+        nodes = list(self._state.nodes.values())
+        alive = [n for n in nodes if (n.state or "").upper() == "ALIVE"]
+        cpu = sum(n.cpu_total or 0.0 for n in nodes)
+        memory = sum(n.memory_bytes_total or 0.0 for n in nodes)
+        return ClusterOverview(
+            nodes_total=len(nodes),
+            nodes_alive=len(alive),
+            actors_total=len(self._state.actors),
+            cpu_total=cpu,
+            memory_bytes_total=memory,
+            job_count=self.job_count(),
+            task_count=self.task_count(),
+        )
 
     def list_actors(self, limit: int = 200) -> list[ActorSummary]:
         limit = min(max(limit, 1), 500)

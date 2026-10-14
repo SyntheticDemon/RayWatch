@@ -63,7 +63,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Cluster status, nodes, resources | `/cluster` + `GET /cluster/nodes` | **partial** | Read-only nodes/actors; no resource charts |
+| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **partial** | Summary cards (CPU/memory/jobs/tasks); node table; no GPU charts |
 | Serve / Train dashboards | — | **n/a** | Separate products |
 
 ## API coverage map (tests)
@@ -81,7 +81,7 @@ Contract and behavior tests should stay aligned with this list. Primary file: `t
 | `GET /search` | yes | — |
 | `WS /ws/live` | yes | — |
 | `GET /tasks/{id}` | yes | — |
-| `GET /cluster/nodes`, `GET /cluster/actors` | yes | — |
+| `GET /cluster/overview`, `GET /cluster/nodes`, `GET /cluster/actors` | yes | — |
 
 ## Next engineering priorities (parity order)
 

@@ -102,6 +102,9 @@ export type NodeSummary = {
   hostname: string | null;
   state: string | null;
   is_head: boolean;
+  cpu_total?: number | null;
+  memory_bytes_total?: number | null;
+  object_store_bytes_total?: number | null;
 };
 
 export type ActorSummary = {
@@ -120,6 +123,21 @@ export type NodesPage = {
 
 export type ActorsPage = {
   items: ActorSummary[];
+  sync: SyncMeta;
+};
+
+export type ClusterOverview = {
+  nodes_total: number;
+  nodes_alive: number;
+  actors_total: number;
+  cpu_total: number;
+  memory_bytes_total: number;
+  job_count: number;
+  task_count: number;
+};
+
+export type ClusterOverviewResponse = {
+  overview: ClusterOverview;
   sync: SyncMeta;
 };
 
@@ -188,6 +206,10 @@ export function triggerSync(): Promise<SyncTriggerResponse> {
 
 export function searchEntities(q: string, limit = 20): Promise<SearchResponse> {
   return fetchJson<SearchResponse>(`/search${qs({ q, limit })}`);
+}
+
+export function fetchClusterOverview(): Promise<ClusterOverviewResponse> {
+  return fetchJson<ClusterOverviewResponse>("/cluster/overview");
 }
 
 export function fetchClusterNodes(): Promise<NodesPage> {

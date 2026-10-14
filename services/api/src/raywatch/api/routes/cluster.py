@@ -1,6 +1,12 @@
 from fastapi import APIRouter, HTTPException, Query
 from raywatch.api.state import live_cache
-from raywatch.model.api_cluster_dto import ActorResponse, ActorsPage, NodeResponse, NodesPage
+from raywatch.model.api_cluster_dto import (
+    ActorResponse,
+    ActorsPage,
+    ClusterOverviewResponse,
+    NodeResponse,
+    NodesPage,
+)
 
 router = APIRouter(prefix="/cluster", tags=["cluster"])
 
@@ -12,6 +18,14 @@ _ACTOR_NOT_FOUND = HTTPException(
     status_code=404,
     detail={"code": "ACTOR_NOT_FOUND", "message": "Actor not in live_cache"},
 )
+
+
+@router.get("/overview", response_model=ClusterOverviewResponse)
+def cluster_overview() -> ClusterOverviewResponse:
+    return ClusterOverviewResponse(
+        overview=live_cache.cluster_overview(),
+        sync=live_cache.sync_meta(),
+    )
 
 
 @router.get("/nodes", response_model=NodesPage)
