@@ -48,7 +48,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 |--------------------------|----------|--------|-------|
 | Auto-refresh job list | Sync loop + TanStack Query | **done** | |
 | Stale / disconnected indicator | Sync banner + `/freshness` | **done** | |
-| WebSocket live patches | `WS /ws/live` | **partial** | `jobs_preview` patches visible rows; job detail gets full `job` payload |
+| WebSocket live patches | `WS /ws/live` | **partial** | Hub `jobs_preview`; job scope sends `job` + `tasks_preview` |
 | Manual resync | `POST /sync/trigger` | **done** | |
 
 ### Search & navigation
@@ -87,9 +87,9 @@ Contract and behavior tests should stay aligned with this list. Primary file: `t
 
 1. **Warm benchmark column** — published in `jobs-list-latency.md`; gate with `make benchmark-ray-assert` when Ray head is up.
 2. **Live task ingest** — close task tree gap vs dashboard on real clusters (`M2` in [mvp-scope.md](./mvp-scope.md)).
-3. **Log tail UX** — stream/tail parity with dashboard job logs (API + UI).
-4. **WS patches on open job** — match dashboard “live” feel without polling storms.
-5. **Cluster overview (read-only)** — nodes/workers summary so search/drill-down is not the only cluster lens.
+3. **Log tail UX** — optional WS log chunks; today sync-triggered HTTP tail + poll.
+4. **Utilization charts / object browser** — Ray metrics and global state remain out of v1 scope unless product expands.
+5. **CI verify-live** — optional nightly `make verify-live` when Docker Ray is available.
 
 ## Related
 

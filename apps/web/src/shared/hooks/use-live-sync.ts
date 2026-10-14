@@ -1,13 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-import type { JobResponse, JobSummary, SyncMeta } from "@/shared/api/client";
+import type { JobResponse, JobSummary, SyncMeta, TaskSummary, TasksPage } from "@/shared/api/client";
 
 type LiveSyncMessage = {
   type?: string;
   sync?: SyncMeta;
   job?: JobResponse["job"];
   jobs_preview?: JobSummary[];
+  tasks_preview?: TaskSummary[];
 };
 
 type UseLiveSyncOptions = {
@@ -76,7 +77,38 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
               if (!sync) return prev;
               return { job: message.job!, sync };
             });
-            queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
+            const tasksPreview = message.tasks_preview;
+            if (tasksPreview?.length) {
+              queryClient.setQueriesData<TasksPage>(
+                { predicate: (q) => q.queryKey[0] === "job-tasks" && q.queryKey[1] === jobId },
+                (old) => {
+                  if (!old) return old;
+                  const byId = new Map(tasksPreview.map((task) => [task.task_id, task]));
+                  const merged = old.items.map((task) => byId.get(task.task_id) ?? task);
+                  for (const task of tasksPreview) {
+                    if (!merged.some((row) => row.task_id === task.task_id)) {
+                      merged.push(task);
+                    }
+                  }
+                  return {
+                    ...old,
+                    items: merged,
+                    sync: message.sync ?? old.sync,
+                  };
+                },
+              );
+              for (const task of tasksPreview) {
+                queryClient.setQueryData(
+                  ["task", task.task_id],
+                  (prev: { task: TaskSummary; sync: SyncMeta } | undefined) => {
+                    if (!prev) return prev;
+                    return { task, sync: message.sync ?? prev.sync };
+                  },
+                );
+              }
+            } else {
+              queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
+            }
           } else {
             queryClient.invalidateQueries({ queryKey: ["job", jobId] });
             queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
