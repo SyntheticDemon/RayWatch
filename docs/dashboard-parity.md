@@ -38,7 +38,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
 | Task detail | `GET /tasks/{id}` + task drawer/page | **close** | `TaskInspector` + timeline; job/parent links; WS refresh on `/tasks/:id` |
-| Worker / node drill-down | Worker card + actor card + cluster links | **partial** | Actor → node one-hop from live index |
+| Worker / node drill-down | Worker card + actor card + cluster links | **close** | Worker/actor cards; parent/child task links in inspector |
 | Actors, objects, global state browser | `GET /cluster/actors` + **`/actors`** + objects on `/cluster` | **close** | Dedicated **Actors** nav tab; objects on cluster; palette links; not full lineage browser |
 | Metrics / charts / GPU views | Utilization bars + sync-history sparklines | **close** | Recent trend (~4 min); not full Grafana |
 
