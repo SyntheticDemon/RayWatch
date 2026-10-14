@@ -39,7 +39,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 |--------------------------|----------|--------|-------|
 | Task detail | `GET /tasks/{id}` + task drawer/page | **partial** | Shared `TaskInspector` + attempt timeline |
 | Worker / node drill-down | Worker card + actor card + cluster links | **partial** | Actor → node one-hop from live index |
-| Actors, objects, global state browser | `GET /cluster/actors` + search | **partial** | No full object browser |
+| Actors, objects, global state browser | `GET /cluster/actors` + `GET /cluster/objects` + search | **partial** | Indexed object table (Ray cap); not full lineage browser |
 | Metrics / charts / GPU views | — | **gap** | Out of v1; not blocking jobs hub |
 
 ### Live & freshness
@@ -81,7 +81,7 @@ Contract and behavior tests should stay aligned with this list. Primary file: `t
 | `GET /search` | yes | — |
 | `WS /ws/live` | yes | — |
 | `GET /tasks/{id}` | yes | — |
-| `GET /cluster/overview`, `GET /cluster/nodes`, `GET /cluster/actors` | yes | — |
+| `GET /cluster/overview`, `GET /cluster/nodes`, `GET /cluster/actors`, `GET /cluster/objects` | yes | — |
 
 ## Evidence (live Ray, 2026-10-14)
 

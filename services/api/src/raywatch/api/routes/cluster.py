@@ -6,6 +6,8 @@ from raywatch.model.api_cluster_dto import (
     ClusterOverviewResponse,
     NodeResponse,
     NodesPage,
+    ObjectResponse,
+    ObjectsPage,
 )
 
 router = APIRouter(prefix="/cluster", tags=["cluster"])
@@ -17,6 +19,10 @@ _NODE_NOT_FOUND = HTTPException(
 _ACTOR_NOT_FOUND = HTTPException(
     status_code=404,
     detail={"code": "ACTOR_NOT_FOUND", "message": "Actor not in live_cache"},
+)
+_OBJECT_NOT_FOUND = HTTPException(
+    status_code=404,
+    detail={"code": "OBJECT_NOT_FOUND", "message": "Object not in live_cache"},
 )
 
 
@@ -52,3 +58,16 @@ def get_actor(actor_id: str) -> ActorResponse:
     if actor is None:
         raise _ACTOR_NOT_FOUND
     return ActorResponse(actor=actor, sync=live_cache.sync_meta())
+
+
+@router.get("/objects", response_model=ObjectsPage)
+def list_objects(limit: int = Query(default=200, ge=1, le=500)) -> ObjectsPage:
+    return ObjectsPage(items=live_cache.list_objects(limit=limit), sync=live_cache.sync_meta())
+
+
+@router.get("/objects/{object_id}", response_model=ObjectResponse)
+def get_object(object_id: str) -> ObjectResponse:
+    obj = live_cache.get_object(object_id)
+    if obj is None:
+        raise _OBJECT_NOT_FOUND
+    return ObjectResponse(object=obj, sync=live_cache.sync_meta())

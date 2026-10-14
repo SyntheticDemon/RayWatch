@@ -16,6 +16,7 @@ class ClusterOverview(BaseModel):
     nodes_total: int
     nodes_alive: int
     actors_total: int
+    objects_total: int
     cpu_total: float
     gpu_total: float
     memory_bytes_total: float
@@ -30,3 +31,13 @@ class ActorSummary(BaseModel):
     job_id: str | None = None
     worker_id: str | None = None
     node_id: str | None = None
+
+
+class ObjectSummary(BaseModel):
+    object_id: str
+    object_size: int | None = None
+    reference_type: str | None = None
+    task_status: str | None = None
+    owner_type: str | None = None
+    pid: int | None = None
+    ip: str | None = None

@@ -4,7 +4,7 @@ import bisect
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from raywatch.model.cluster import ActorSummary, ClusterOverview, NodeSummary
+from raywatch.model.cluster import ActorSummary, ClusterOverview, NodeSummary, ObjectSummary
 from raywatch.model.freshness import SyncMeta
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus, JobSummary
@@ -27,6 +27,7 @@ class LiveCacheState:
     ray_reachable: bool = True
     nodes: dict[str, NodeSummary] = field(default_factory=dict)
     actors: dict[str, ActorSummary] = field(default_factory=dict)
+    objects: dict[str, ObjectSummary] = field(default_factory=dict)
 
 
 class LiveCache:
@@ -186,6 +187,19 @@ class LiveCache:
                         "status": node.state,
                     }
                 )
+        for object_id, obj in self._state.objects.items():
+            if len(hits) >= limit:
+                break
+            if needle in object_id.lower():
+                hits.append(
+                    {
+                        "kind": "object",
+                        "id": object_id,
+                        "job_id": None,
+                        "label": obj.reference_type or object_id[:16],
+                        "status": obj.task_status,
+                    }
+                )
         return hits[:limit]
 
     def list_jobs(
@@ -312,9 +326,15 @@ class LiveCache:
     def task_count(self) -> int:
         return len(self._state.tasks)
 
-    def set_cluster_snapshot(self, nodes: list[NodeSummary], actors: list[ActorSummary]) -> None:
+    def set_cluster_snapshot(
+        self,
+        nodes: list[NodeSummary],
+        actors: list[ActorSummary],
+        objects: list[ObjectSummary] | None = None,
+    ) -> None:
         self._state.nodes = {n.node_id: n for n in nodes}
         self._state.actors = {a.actor_id: a for a in actors}
+        self._state.objects = {o.object_id: o for o in (objects or [])}
 
     def list_nodes(self) -> list[NodeSummary]:
         return sorted(self._state.nodes.values(), key=lambda n: n.node_id)
@@ -329,6 +349,7 @@ class LiveCache:
             nodes_total=len(nodes),
             nodes_alive=len(alive),
             actors_total=len(self._state.actors),
+            objects_total=len(self._state.objects),
             cpu_total=cpu,
             gpu_total=gpu,
             memory_bytes_total=memory,
@@ -346,3 +367,11 @@ class LiveCache:
 
     def get_actor(self, actor_id: str) -> ActorSummary | None:
         return self._state.actors.get(actor_id)
+
+    def list_objects(self, limit: int = 200) -> list[ObjectSummary]:
+        limit = min(max(limit, 1), 500)
+        items = sorted(self._state.objects.values(), key=lambda o: o.object_id)
+        return items[:limit]
+
+    def get_object(self, object_id: str) -> ObjectSummary | None:
+        return self._state.objects.get(object_id)

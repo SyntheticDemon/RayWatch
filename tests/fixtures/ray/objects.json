@@ -1,0 +1,17 @@
+{
+  "data": {
+    "result": {
+      "result": [
+        {
+          "object_id": "obj-demo-hex-1",
+          "object_size": 128,
+          "reference_type": "LOCAL_REFERENCE",
+          "task_status": "FINISHED",
+          "type": "WORKER",
+          "pid": 42,
+          "ip": "10.0.0.1"
+        }
+      ]
+    }
+  }
+}

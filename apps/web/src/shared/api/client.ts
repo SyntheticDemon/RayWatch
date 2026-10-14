@@ -127,10 +127,26 @@ export type ActorsPage = {
   sync: SyncMeta;
 };
 
+export type ObjectSummary = {
+  object_id: string;
+  object_size: number | null;
+  reference_type: string | null;
+  task_status: string | null;
+  owner_type: string | null;
+  pid: number | null;
+  ip: string | null;
+};
+
+export type ObjectsPage = {
+  items: ObjectSummary[];
+  sync: SyncMeta;
+};
+
 export type ClusterOverview = {
   nodes_total: number;
   nodes_alive: number;
   actors_total: number;
+  objects_total: number;
   cpu_total: number;
   gpu_total: number;
   memory_bytes_total: number;
@@ -225,6 +241,10 @@ export function fetchClusterNodes(): Promise<NodesPage> {
 
 export function fetchClusterActors(limit = 200): Promise<ActorsPage> {
   return fetchJson<ActorsPage>(`/cluster/actors${qs({ limit })}`);
+}
+
+export function fetchClusterObjects(limit = 200): Promise<ObjectsPage> {
+  return fetchJson<ObjectsPage>(`/cluster/objects${qs({ limit })}`);
 }
 
 export function fetchClusterActor(actorId: string): Promise<ActorResponse> {

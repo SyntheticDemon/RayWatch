@@ -71,6 +71,7 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
             queryClient.invalidateQueries({ queryKey: ["cluster-overview"] });
             queryClient.invalidateQueries({ queryKey: ["cluster-nodes"] });
             queryClient.invalidateQueries({ queryKey: ["cluster-actors"] });
+            queryClient.invalidateQueries({ queryKey: ["cluster-objects"] });
           } else if (message.job) {
             queryClient.setQueryData<JobResponse>(["job", jobId], (prev) => {
               const sync = message.sync ?? prev?.sync;

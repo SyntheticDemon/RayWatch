@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from raywatch.model.cluster import ActorSummary, ClusterOverview, NodeSummary
+from raywatch.model.cluster import ActorSummary, ClusterOverview, NodeSummary, ObjectSummary
 from raywatch.model.freshness import SyncMeta
 
 
@@ -25,4 +25,14 @@ class ActorResponse(BaseModel):
 
 class ClusterOverviewResponse(BaseModel):
     overview: ClusterOverview
+    sync: SyncMeta
+
+
+class ObjectsPage(BaseModel):
+    items: list[ObjectSummary]
+    sync: SyncMeta
+
+
+class ObjectResponse(BaseModel):
+    object: ObjectSummary
     sync: SyncMeta

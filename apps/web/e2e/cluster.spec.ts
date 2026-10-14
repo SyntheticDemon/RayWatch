@@ -7,4 +7,5 @@ test("cluster page loads nodes from fixtures", async ({ page }) => {
   await expect(page.getByText("Nodes alive")).toBeVisible();
   await expect(page.getByText("node-abc")).toBeVisible();
   await expect(page.getByText("actor-demo-1")).toBeVisible();
+  await expect(page.getByText("obj-demo-hex-1")).toBeVisible();
 });

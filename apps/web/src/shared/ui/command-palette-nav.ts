@@ -17,6 +17,7 @@ export function pathForSearchHit(hit: SearchHit): string {
   }
   if (hit.kind === "actor") return `/cluster?focus=actor&id=${encodeURIComponent(hit.id)}`;
   if (hit.kind === "node") return `/cluster?focus=node&id=${encodeURIComponent(hit.id)}`;
+  if (hit.kind === "object") return `/cluster?focus=object&id=${encodeURIComponent(hit.id)}`;
   return `/jobs/${hit.id}`;
 }
 
