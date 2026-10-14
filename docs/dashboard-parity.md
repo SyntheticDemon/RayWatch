@@ -31,7 +31,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Stop / terminate job | `POST /jobs/{id}/stop` | **done** | Best-effort Ray HTTP |
 | Submit job from UI | — | **n/a** | Ops view; use Ray CLI/SDK |
 | Driver logs (job) | `GET /jobs/{id}/logs` + LogViewer | **partial** | Incremental tail, filters, download; `?log_line=` deep links |
-| Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **partial** | Live Ray ingest + incremental remove when task page is complete |
+| Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **close** | Cursor pagination + “Load more”; WS `tasks_preview` patches rows |
 
 ### Tasks & entities
 
@@ -82,6 +82,10 @@ Contract and behavior tests should stay aligned with this list. Primary file: `t
 | `WS /ws/live` | yes | — |
 | `GET /tasks/{id}` | yes | — |
 | `GET /cluster/overview`, `GET /cluster/nodes`, `GET /cluster/actors`, `GET /cluster/objects` | yes | — |
+
+## v1 boundary (not full Ray dashboard)
+
+RayWatch v1 intentionally omits **time-series metrics / utilization charts** and **multi-hop object lineage** (see [frontend-features.md](./frontend-features.md) “Explicitly not in frontend v1”). Everything else in the matrix above targets **done** or **close** for operator workflows (jobs, tasks, logs, cluster entities, search, live sync).
 
 ## Evidence (live Ray, 2026-10-14)
 

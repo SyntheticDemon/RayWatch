@@ -1,7 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import type { InfiniteData } from "@tanstack/react-query";
+
 import type { JobResponse, JobSummary, SyncMeta, TaskSummary, TasksPage } from "@/shared/api/client";
+import { patchJobTasksQueryData } from "@/shared/lib/merge-task-previews";
 
 type LiveSyncMessage = {
   type?: string;
@@ -79,24 +82,10 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
               return { job: message.job!, sync };
             });
             const tasksPreview = message.tasks_preview;
-            if (tasksPreview?.length) {
-              queryClient.setQueriesData<TasksPage>(
-                { predicate: (q) => q.queryKey[0] === "job-tasks" && q.queryKey[1] === jobId },
-                (old) => {
-                  if (!old) return old;
-                  const byId = new Map(tasksPreview.map((task) => [task.task_id, task]));
-                  const merged = old.items.map((task) => byId.get(task.task_id) ?? task);
-                  for (const task of tasksPreview) {
-                    if (!merged.some((row) => row.task_id === task.task_id)) {
-                      merged.push(task);
-                    }
-                  }
-                  return {
-                    ...old,
-                    items: merged,
-                    sync: message.sync ?? old.sync,
-                  };
-                },
+            if (tasksPreview?.length && message.sync) {
+              queryClient.setQueriesData<TasksPage | InfiniteData<TasksPage>>(
+                { queryKey: ["job-tasks", jobId] },
+                (old) => patchJobTasksQueryData(old, tasksPreview, message.sync!),
               );
               for (const task of tasksPreview) {
                 queryClient.setQueryData(

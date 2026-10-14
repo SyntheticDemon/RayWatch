@@ -729,6 +729,10 @@ a:hover {
   font-weight: 600;
 }
 
+.panel-actions {
+  margin-top: 0.75rem;
+}
+
 .task-drawer {
   margin-top: 1rem;
   padding: 1.25rem;
