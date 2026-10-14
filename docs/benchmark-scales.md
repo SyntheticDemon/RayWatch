@@ -29,6 +29,8 @@ Default scales: **10, 25, 50** jobs submitted on the **real** cluster (cumulativ
 
 RayWatch columns at the same scales still use in-memory seed (not Ray’s full history size).
 
+The comparison table reports **cold** (first timed sample) and **warm p95** (after `BENCHMARK_WARMUP`, default **5**). Product goal: warm RayWatch ≤ warm Ray on jobs list when cluster is up.
+
 ## Demo cluster (`scripts/demo_occupied_ray.sh`)
 
 | Variable | Default | Meaning |

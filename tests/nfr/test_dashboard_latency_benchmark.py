@@ -27,7 +27,8 @@ async def test_jobs_list_latency_raywatch_vs_ray_dashboard_table() -> None:
     rows = await collect_scale_rows(scales, include_ray_dashboard=compare_ray)
     table = format_latency_table(rows)
     banner = (
-        "\n\n### Jobs list latency benchmark (p95 ms)\n\n"
+        "\n\n### Jobs list latency benchmark (cold + warm p95 ms)\n\n"
+        f"Warm p95 uses BENCHMARK_WARMUP discarded iterations. "
         f"Ray dashboard column: {'included (live cluster)' if compare_ray else 'skipped (no Ray head)'}\n\n"
     )
     print(banner + table + "\n")

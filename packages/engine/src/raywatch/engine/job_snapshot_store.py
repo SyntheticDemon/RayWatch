@@ -90,6 +90,37 @@ class JobSnapshotStore:
             payload = json.loads(payload)
         return JobDetail.model_validate(payload)
 
+    def search_jobs(self, query: str, limit: int = 20) -> list[JobDetail]:
+        if not self.enabled():
+            return []
+        self.ensure_schema()
+        needle = query.strip()
+        if not needle:
+            return []
+        limit = min(max(limit, 1), 50)
+        try:
+            with self._connect() as conn:
+                rows = conn.execute(
+                    """
+                    SELECT payload FROM job_snapshot
+                    WHERE job_id ILIKE %s
+                       OR payload->>'entrypoint' ILIKE %s
+                    ORDER BY updated_at DESC
+                    LIMIT %s
+                    """,
+                    (f"%{needle}%", f"%{needle}%", limit),
+                ).fetchall()
+        except Exception:
+            logger.exception("job_snapshot search failed")
+            return []
+        jobs: list[JobDetail] = []
+        for row in rows:
+            payload = row[0]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            jobs.append(JobDetail.model_validate(payload))
+        return jobs
+
 
 def snapshot_store_from_env() -> JobSnapshotStore:
     return JobSnapshotStore(os.environ.get("DATABASE_URL"))

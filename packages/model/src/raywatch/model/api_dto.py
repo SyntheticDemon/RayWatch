@@ -52,3 +52,16 @@ class SyncTriggerResponse(BaseModel):
     sync: SyncMeta
     job_count: int = 0
     task_count: int = 0
+
+
+class SearchHit(BaseModel):
+    kind: str
+    id: str
+    job_id: str | None = None
+    label: str
+    status: str | None = None
+
+
+class SearchResponse(BaseModel):
+    items: list[SearchHit]
+    sync: SyncMeta

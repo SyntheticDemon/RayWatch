@@ -95,13 +95,16 @@ def test_parse_scale_list_dedupes_and_sorts(monkeypatch: pytest.MonkeyPatch) -> 
 def test_dashboard_format_latency_table() -> None:
     row = ScaleLatencyRow(
         job_count=10,
-        raywatch_list=LatencySample(1, 2, 1.5, 5),
-        raywatch_get=LatencySample(1, 2, 1.5, 5),
-        ray_dashboard_jobs=None,
+        raywatch_list_cold_ms=3.0,
+        raywatch_list_warm_p95_ms=2.0,
+        raywatch_get_warm_p95_ms=1.5,
+        ray_dashboard_list_cold_ms=None,
+        ray_dashboard_list_warm_p95_ms=None,
         ray_jobs_in_payload=None,
     )
     md = format_latency_table([row])
     assert "10" in md
+    assert "warm p95" in md
     assert "—" in md
 
 
@@ -111,7 +114,7 @@ async def test_collect_scale_rows_raywatch_only() -> None:
     rows = await collect_scale_rows([50], include_ray_dashboard=False)
     assert len(rows) == 1
     assert rows[0].job_count == 50
-    assert rows[0].ray_dashboard_jobs is None
+    assert rows[0].ray_dashboard_list_warm_p95_ms is None
 
 
 @pytest.mark.asyncio

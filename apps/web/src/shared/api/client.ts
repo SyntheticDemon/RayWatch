@@ -12,6 +12,8 @@ export type JobSummary = {
   job_id: string;
   status: string;
   entrypoint: string;
+  started_at: string | null;
+  ended_at: string | null;
   task_running: number;
   task_failed: number;
   task_total: number;
@@ -34,6 +36,8 @@ export type TaskSummary = {
   parent_task_id: string | null;
   attempt_count: number;
   error_message: string | null;
+  started_at: string | null;
+  ended_at: string | null;
 };
 
 export type JobsPage = {
@@ -72,12 +76,28 @@ export type StopJobResponse = {
   sync: SyncMeta;
 };
 
+export type SearchHit = {
+  kind: string;
+  id: string;
+  job_id: string | null;
+  label: string;
+  status: string | null;
+};
+
+export type SearchResponse = {
+  items: SearchHit[];
+  sync: SyncMeta;
+};
+
 export type JobsQuery = {
   cursor?: string;
   limit?: number;
   status?: string;
   q?: string;
   sort?: "job_id" | "started_at" | "status";
+  failed_within_hours?: number;
+  started_after?: string;
+  started_before?: string;
 };
 
 export type SyncTriggerResponse = {
@@ -129,4 +149,8 @@ export function stopJob(jobId: string): Promise<StopJobResponse> {
 
 export function triggerSync(): Promise<SyncTriggerResponse> {
   return fetchJson<SyncTriggerResponse>("/sync/trigger", { method: "POST" });
+}
+
+export function searchEntities(q: string, limit = 20): Promise<SearchResponse> {
+  return fetchJson<SearchResponse>(`/search${qs({ q, limit })}`);
 }

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 
+import { VirtualizedJobsTable } from "@/features/jobs/virtualized-jobs-table";
 import { fetchJobs, triggerSync, type JobSummary } from "@/shared/api/client";
+import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { SyncBanner } from "@/shared/ui/sync-banner";
 
 const STATUS_CHIPS = ["", "RUNNING", "FAILED", "SUCCEEDED"] as const;
@@ -10,23 +11,35 @@ const STATUS_CHIPS = ["", "RUNNING", "FAILED", "SUCCEEDED"] as const;
 export function JobsPage() {
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
+  const [failed24h, setFailed24h] = useState(false);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [rows, setRows] = useState<JobSummary[]>([]);
   const [sort, setSort] = useState<"job_id" | "started_at" | "status">("job_id");
+  const [startedAfter, setStartedAfter] = useState("");
+  const [startedBefore, setStartedBefore] = useState("");
   const queryClient = useQueryClient();
+  const { connected } = useLiveSync();
 
   const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: ["jobs", status, q, sort, cursor ?? ""],
+    queryKey: ["jobs", status, q, sort, failed24h, startedAfter, startedBefore, cursor ?? ""],
     queryFn: () =>
       fetchJobs({
-        status: status || undefined,
+        status: failed24h ? "FAILED" : status || undefined,
         q: q || undefined,
         sort,
         cursor,
         limit: 50,
+        failed_within_hours: failed24h ? 24 : undefined,
+        started_after: startedAfter ? new Date(startedAfter).toISOString() : undefined,
+        started_before: startedBefore ? new Date(startedBefore).toISOString() : undefined,
       }),
-    refetchInterval: 5000,
+    refetchInterval: connected ? false : 5000,
   });
+
+  useEffect(() => {
+    setCursor(undefined);
+    setRows([]);
+  }, [status, q, sort, failed24h, startedAfter, startedBefore]);
 
   useEffect(() => {
     if (!data) return;
@@ -50,10 +63,9 @@ export function JobsPage() {
   });
 
   const resetFilters = (nextStatus: string, nextQ: string) => {
+    setFailed24h(false);
     setStatus(nextStatus);
     setQ(nextQ);
-    setCursor(undefined);
-    setRows([]);
   };
 
   if (isLoading && rows.length === 0) {
@@ -67,14 +79,19 @@ export function JobsPage() {
     <main className="jobs-page">
       <header className="page-header">
         <h1>Jobs</h1>
-        <button
-          type="button"
-          className="btn-secondary"
-          disabled={syncMutation.isPending}
-          onClick={() => syncMutation.mutate()}
-        >
-          Sync Ray
-        </button>
+        <div className="header-actions">
+          <span className="ws-indicator" data-connected={connected}>
+            {connected ? "Live" : "Polling"}
+          </span>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={syncMutation.isPending}
+            onClick={() => syncMutation.mutate()}
+          >
+            Sync Ray
+          </button>
+        </div>
       </header>
       <SyncBanner sync={data?.sync} />
       <div className="jobs-toolbar">
@@ -86,51 +103,55 @@ export function JobsPage() {
         />
         <label className="sort-label">
           Sort
-          <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as typeof sort)}
+          >
             <option value="job_id">Job ID</option>
             <option value="started_at">Started</option>
             <option value="status">Status</option>
           </select>
+        </label>
+        <label className="sort-label">
+          From
+          <input
+            type="datetime-local"
+            value={startedAfter}
+            onChange={(e) => setStartedAfter(e.target.value)}
+          />
+        </label>
+        <label className="sort-label">
+          To
+          <input
+            type="datetime-local"
+            value={startedBefore}
+            onChange={(e) => setStartedBefore(e.target.value)}
+          />
         </label>
         <div className="chip-row">
           {STATUS_CHIPS.map((chip) => (
             <button
               key={chip || "all"}
               type="button"
-              className={`chip ${status === chip ? "chip-active" : ""}`}
+              className={`chip ${!failed24h && status === chip ? "chip-active" : ""}`}
               onClick={() => resetFilters(chip, q)}
             >
               {chip || "All"}
             </button>
           ))}
+          <button
+            type="button"
+            className={`chip ${failed24h ? "chip-active" : ""}`}
+            onClick={() => {
+              setFailed24h(true);
+              setStatus("FAILED");
+            }}
+          >
+            Failed (24h)
+          </button>
         </div>
       </div>
-      <table className="jobs-table">
-        <thead>
-          <tr>
-            <th>Job ID</th>
-            <th>Status</th>
-            <th>Entrypoint</th>
-            <th>Tasks</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((job) => (
-            <tr key={job.job_id}>
-              <td>
-                <Link to={`/jobs/${job.job_id}`}>{job.job_id}</Link>
-              </td>
-              <td>
-                <span className={`badge badge-${job.status.toLowerCase()}`}>{job.status}</span>
-              </td>
-              <td className="mono truncate">{job.entrypoint}</td>
-              <td>
-                {job.task_running} run / {job.task_failed} fail / {job.task_total} total
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <VirtualizedJobsTable rows={rows} />
       {data?.next_cursor && (
         <button
           type="button"

@@ -12,6 +12,7 @@ from raywatch.adapter_ray.normalize_jobs import normalize_jobs_payload
 from raywatch.adapter_ray.normalize_tasks import normalize_tasks_payload
 from raywatch.adapter_ray.ray_client import fetch_jobs_json, fetch_tasks_json
 from raywatch.engine.live_cache import LiveCache
+from raywatch.engine.sync_side_effects import after_live_sync
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,7 @@ async def sync_active_jobs(live_cache: LiveCache) -> None:
         if tasks_fixture is not None:
             task_payload = load_json_fixture(tasks_fixture)
             await _apply_tasks_payload(live_cache, task_payload, cluster_epoch)
+        after_live_sync(live_cache)
         return
 
     try:
@@ -76,6 +78,7 @@ async def sync_active_jobs(live_cache: LiveCache) -> None:
         async with httpx.AsyncClient() as client:
             tasks_payload = await fetch_tasks_json(client)
         await _apply_tasks_payload(live_cache, tasks_payload, cluster_epoch)
+        after_live_sync(live_cache)
     except Exception:
         logger.exception("sync_active_jobs failed")
         live_cache.mark_ray_unreachable()

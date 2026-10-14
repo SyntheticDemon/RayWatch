@@ -8,7 +8,8 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from raywatch.api.routes import jobs, meta, tasks
+from raywatch.api.routes import jobs, meta, search, tasks, ws
+from raywatch.engine.sync_side_effects import job_snapshot_store
 from raywatch.api.state import live_cache
 from raywatch.collector.sync_loop import run_sync_loop, sync_active_jobs
 
@@ -25,6 +26,7 @@ async def lifespan(app: FastAPI):
     elif not os.environ.get("RAYWATCH_FIXTURE_JOBS") and fixture_default.is_file():
         os.environ.setdefault("RAYWATCH_FIXTURE_JOBS", str(fixture_default))
 
+    job_snapshot_store().ensure_schema()
     await sync_active_jobs(live_cache)
     interval = float(os.environ.get("RAYWATCH_SYNC_INTERVAL_SEC", "5"))
     sync_task = asyncio.create_task(run_sync_loop(live_cache, interval_sec=interval))
@@ -46,8 +48,10 @@ app.add_middleware(
 )
 
 app.include_router(meta.router)
+app.include_router(search.router)
 app.include_router(jobs.router)
 app.include_router(tasks.router)
+app.include_router(ws.router)
 
 
 @app.get("/health")

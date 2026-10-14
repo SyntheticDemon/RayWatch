@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
+import { TaskDrawer } from "@/features/jobs/task-drawer";
 import { TaskTree } from "@/features/jobs/task-tree";
 import {
   fetchJob,
@@ -11,8 +12,16 @@ import {
   stopJob,
   triggerSync,
 } from "@/shared/api/client";
+import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { LogViewer } from "@/shared/ui/log-viewer";
 import { SyncBanner } from "@/shared/ui/sync-banner";
+
+function filterLogsForTask(logs: string, taskId: string | null): string {
+  if (!taskId) return logs;
+  const needle = taskId.toLowerCase();
+  const lines = logs.split("\n").filter((line) => line.toLowerCase().includes(needle));
+  return lines.length ? lines.join("\n") : logs;
+}
 
 export function JobDetailPage() {
   const { jobId = "" } = useParams();
@@ -21,19 +30,20 @@ export function JobDetailPage() {
   const [stopConfirm, setStopConfirm] = useState(false);
   const [logsPaused, setLogsPaused] = useState(false);
   const queryClient = useQueryClient();
+  const { connected } = useLiveSync(jobId);
 
   const jobQuery = useQuery({
     queryKey: ["job", jobId],
     queryFn: () => fetchJob(jobId),
     enabled: Boolean(jobId),
-    refetchInterval: 5000,
+    refetchInterval: connected ? false : 5000,
   });
 
   const tasksQuery = useQuery({
     queryKey: ["job-tasks", jobId],
     queryFn: () => fetchJobTasks(jobId),
     enabled: Boolean(jobId),
-    refetchInterval: 5000,
+    refetchInterval: connected ? false : 5000,
   });
 
   const logsQuery = useQuery({
@@ -121,6 +131,9 @@ export function JobDetailPage() {
         </div>
       </header>
       <SyncBanner sync={sync} />
+      <p className="ws-indicator" data-connected={connected}>
+        {connected ? "Live updates connected" : "Polling for updates"}
+      </p>
       {stopMutation.data && (
         <p className={stopMutation.data.accepted ? "muted" : "error"}>{stopMutation.data.message}</p>
       )}
@@ -154,39 +167,16 @@ export function JobDetailPage() {
       </section>
 
       {selectedTaskId && taskQuery.data && (
-        <aside className="task-drawer" role="dialog" aria-label="Task detail">
-          <button type="button" className="btn-secondary" onClick={() => setSearchParams({})}>
-            Close task
-          </button>
-          <h3>Task</h3>
-          <dl className="meta-grid">
-            <dt>ID</dt>
-            <dd className="mono">{taskQuery.data.task.task_id}</dd>
-            <dt>Status</dt>
-            <dd>{taskQuery.data.task.status}</dd>
-            <dt>Worker</dt>
-            <dd className="mono">{taskQuery.data.task.worker_id ?? "—"}</dd>
-            <dt>Parent</dt>
-            <dd className="mono">{taskQuery.data.task.parent_task_id ?? "—"}</dd>
-            <dt>Attempts</dt>
-            <dd>{taskQuery.data.task.attempt_count}</dd>
-            {taskQuery.data.task.error_message && (
-              <>
-                <dt>Error</dt>
-                <dd>{taskQuery.data.task.error_message}</dd>
-              </>
-            )}
-          </dl>
-        </aside>
+        <TaskDrawer task={taskQuery.data.task} onClose={() => setSearchParams({})} />
       )}
 
       <section className="panel">
-        <h2>Logs</h2>
+        <h2>{selectedTaskId ? "Task logs (filtered)" : "Job logs"}</h2>
         {logsQuery.isLoading ? (
           <p className="muted">Loading logs…</p>
         ) : (
           <LogViewer
-            text={logsQuery.data?.logs ?? ""}
+            text={filterLogsForTask(logsQuery.data?.logs ?? "", selectedTaskId)}
             errorMessage={logsQuery.data?.error_message}
             pollPaused={logsPaused}
             onTogglePause={() => setLogsPaused((p) => !p)}

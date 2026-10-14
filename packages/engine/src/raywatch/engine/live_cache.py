@@ -118,6 +118,44 @@ class LiveCache:
     def get_task(self, task_id: str) -> TaskSummary | None:
         return self._state.tasks.get(task_id)
 
+    def iter_jobs(self) -> list[JobDetail]:
+        return list(self._state.jobs.values())
+
+    def search_entities(self, query: str, limit: int = 20) -> list[dict[str, str | None]]:
+        needle = query.lower().strip()
+        if not needle:
+            return []
+        limit = min(max(limit, 1), 50)
+        hits: list[dict[str, str | None]] = []
+        for jid in self._state.job_ids_sorted:
+            if len(hits) >= limit:
+                break
+            job = self._state.jobs[jid]
+            if needle in jid.lower() or needle in job.entrypoint.lower():
+                hits.append(
+                    {
+                        "kind": "job",
+                        "id": jid,
+                        "job_id": jid,
+                        "label": job.entrypoint or jid,
+                        "status": job.status.value,
+                    }
+                )
+        for task_id, task in self._state.tasks.items():
+            if len(hits) >= limit:
+                break
+            if needle in task_id.lower() or needle in task.name.lower():
+                hits.append(
+                    {
+                        "kind": "task",
+                        "id": task_id,
+                        "job_id": task.job_id,
+                        "label": task.name or task.func_or_class or task_id,
+                        "status": task.status.value,
+                    }
+                )
+        return hits[:limit]
+
     def list_jobs(
         self,
         cursor: str | None,
@@ -126,11 +164,37 @@ class LiveCache:
         status: JobStatus | None = None,
         q: str | None = None,
         sort: str = "job_id",
+        started_after: datetime | None = None,
+        started_before: datetime | None = None,
+        failed_within_hours: float | None = None,
     ) -> tuple[list[JobSummary], str | None]:
         limit = min(max(limit, 1), 100)
         job_ids = list(self._state.job_ids_sorted)
         if status is not None:
             job_ids = [jid for jid in job_ids if self._state.jobs[jid].status == status]
+        if started_after is not None:
+            job_ids = [
+                jid
+                for jid in job_ids
+                if self._state.jobs[jid].started_at is not None
+                and self._state.jobs[jid].started_at >= started_after
+            ]
+        if started_before is not None:
+            job_ids = [
+                jid
+                for jid in job_ids
+                if self._state.jobs[jid].started_at is not None
+                and self._state.jobs[jid].started_at <= started_before
+            ]
+        if failed_within_hours is not None:
+            cutoff = _utc_now().timestamp() - failed_within_hours * 3600
+            job_ids = [
+                jid
+                for jid in job_ids
+                if self._state.jobs[jid].status == JobStatus.FAILED
+                and self._state.jobs[jid].ended_at is not None
+                and self._state.jobs[jid].ended_at.timestamp() >= cutoff
+            ]
         if q:
             needle = q.lower().strip()
             if needle:

@@ -29,3 +29,4 @@ RayWatch is a read-optimized operations and observability layer on top of [Ray](
 | [backend-technology.md](./backend-technology.md) | Modern fast Python stack (uv, Granian, async collector) |
 | [testing.md](./testing.md) | Unit, contract, Ray-in-Docker integration, e2e |
 | [non-functional-requirements.md](./non-functional-requirements.md) | Performance, scale, security, ops, UX targets |
+| [dashboard-parity.md](./dashboard-parity.md) | **Ray Dashboard feature parity** + warm/cold benchmark criteria |

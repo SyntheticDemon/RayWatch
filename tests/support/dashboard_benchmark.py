@@ -13,7 +13,7 @@ from raywatch.api.state import live_cache
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus
 
-from support.latency_stats import LatencySample, percentile_ms
+from support.latency_stats import percentile_ms
 from support.perf_harness import reset_live_cache
 from support.request_latency import measure_fresh_client
 
@@ -21,9 +21,11 @@ from support.request_latency import measure_fresh_client
 @dataclass(frozen=True)
 class ScaleLatencyRow:
     job_count: int
-    raywatch_list: LatencySample
-    raywatch_get: LatencySample
-    ray_dashboard_jobs: LatencySample | None
+    raywatch_list_cold_ms: float
+    raywatch_list_warm_p95_ms: float
+    raywatch_get_warm_p95_ms: float
+    ray_dashboard_list_cold_ms: float | None
+    ray_dashboard_list_warm_p95_ms: float | None
     ray_jobs_in_payload: int | None
 
 
@@ -50,50 +52,61 @@ def seed_raywatch_jobs(count: int, *, scenario_id: int) -> None:
     live_cache.apply_ingest_batch(IngestBatch(ops=ops))
 
 
-async def measure_raywatch_jobs_list(limit: int = 50) -> LatencySample:
-    report = await measure_fresh_client(
-        f"/jobs?limit={limit}",
-        iterations=int(os.environ.get("BENCHMARK_ITERATIONS", "15")),
-        warmup=int(os.environ.get("BENCHMARK_WARMUP", "0")),
+def _benchmark_iterations() -> int:
+    return int(os.environ.get("BENCHMARK_ITERATIONS", "15"))
+
+
+def _benchmark_warmup() -> int:
+    return int(os.environ.get("BENCHMARK_WARMUP", "5"))
+
+
+async def measure_raywatch_jobs_list(limit: int = 50) -> tuple[float, float]:
+    """Return (cold first-sample ms, warm p95 ms) for GET /jobs."""
+    path = f"/jobs?limit={limit}"
+    iterations = _benchmark_iterations()
+    cold_report = await measure_fresh_client(path, iterations=iterations, warmup=0)
+    warm_report = await measure_fresh_client(
+        path, iterations=iterations, warmup=_benchmark_warmup()
     )
-    return report.steady
+    return cold_report.cold_ms, warm_report.steady.p95_ms
 
 
-async def measure_raywatch_job_get(job_id: str) -> LatencySample:
-    report = await measure_fresh_client(
+async def measure_raywatch_job_get_warm(job_id: str) -> float:
+    warm_report = await measure_fresh_client(
         f"/jobs/{job_id}",
-        iterations=int(os.environ.get("BENCHMARK_ITERATIONS", "15")),
-        warmup=int(os.environ.get("BENCHMARK_WARMUP", "0")),
+        iterations=_benchmark_iterations(),
+        warmup=_benchmark_warmup(),
     )
-    return report.steady
+    return warm_report.steady.p95_ms
 
 
-async def measure_ray_dashboard_jobs_api() -> tuple[LatencySample, int]:
-    base = ray_dashboard_base_url()
-    iterations = int(os.environ.get("BENCHMARK_ITERATIONS", "15"))
-
-    async def one_fetch() -> None:
-        async with httpx.AsyncClient() as client:
-            await fetch_jobs_json(client)
-
-    # Fresh httpx client per sample (same honesty as RayWatch path).
-    samples_ms: list[float] = []
+async def _ray_dashboard_jobs_fetch_ms() -> float:
     from time import perf_counter
 
+    start = perf_counter()
+    async with httpx.AsyncClient() as client:
+        await fetch_jobs_json(client)
+    return (perf_counter() - start) * 1000
+
+
+async def measure_ray_dashboard_jobs_api() -> tuple[float, float, int]:
+    """Return (cold first-sample ms, warm p95 ms, job rows in payload)."""
+    iterations = _benchmark_iterations()
+    warmup = _benchmark_warmup()
+
+    for _ in range(warmup):
+        await _ray_dashboard_jobs_fetch_ms()
+
+    samples_ms: list[float] = []
     for _ in range(iterations):
-        start = perf_counter()
-        await one_fetch()
-        samples_ms.append((perf_counter() - start) * 1000)
-    sample = LatencySample(
-        p50_ms=percentile_ms(samples_ms, 0.50),
-        p95_ms=percentile_ms(samples_ms, 0.95),
-        mean_ms=sum(samples_ms) / len(samples_ms),
-        n=len(samples_ms),
-    )
+        samples_ms.append(await _ray_dashboard_jobs_fetch_ms())
+
+    cold_ms = samples_ms[0] if samples_ms else 0.0
+    warm_p95 = percentile_ms(samples_ms, 0.95)
     async with httpx.AsyncClient() as client:
         payload = await fetch_jobs_json(client)
     job_count = len(_job_rows_from_payload(payload))
-    return sample, job_count
+    return cold_ms, warm_p95, job_count
 
 
 async def ray_dashboard_reachable() -> bool:
@@ -137,9 +150,11 @@ async def ensure_ray_job_history_at_least(target: int, submitted_so_far: int) ->
 def format_latency_table(rows: list[ScaleLatencyRow]) -> str:
     headers = [
         "jobs",
-        "raywatch GET /jobs p95 (ms)",
-        "raywatch GET /jobs/{id} p95 (ms)",
-        "ray dashboard GET /api/v0/jobs p95 (ms)",
+        "raywatch GET /jobs cold (ms)",
+        "raywatch GET /jobs warm p95 (ms)",
+        "raywatch GET /jobs/{id} warm p95 (ms)",
+        "ray dashboard GET /api/v0/jobs cold (ms)",
+        "ray dashboard warm p95 (ms)",
         "ray jobs in API payload",
     ]
     lines = [
@@ -147,22 +162,25 @@ def format_latency_table(rows: list[ScaleLatencyRow]) -> str:
         "| " + " | ".join(["---"] * len(headers)) + " |",
     ]
     for row in rows:
-        mid = f"bench-job-{row.job_count // 2:06d}" if row.job_count else "bench-job-000000"
-        get_p95 = f"{row.raywatch_get.p95_ms:.2f}" if row.job_count else "—"
-        if row.ray_dashboard_jobs is None:
-            ray_p95 = "—"
+        get_p95 = f"{row.raywatch_get_warm_p95_ms:.2f}" if row.job_count else "—"
+        if row.ray_dashboard_list_warm_p95_ms is None:
+            ray_cold = "—"
+            ray_warm = "—"
             ray_count = "—"
         else:
-            ray_p95 = f"{row.ray_dashboard_jobs.p95_ms:.2f}"
+            ray_cold = f"{row.ray_dashboard_list_cold_ms:.2f}"
+            ray_warm = f"{row.ray_dashboard_list_warm_p95_ms:.2f}"
             ray_count = str(row.ray_jobs_in_payload)
         lines.append(
             "| "
             + " | ".join(
                 [
                     str(row.job_count),
-                    f"{row.raywatch_list.p95_ms:.2f}",
+                    f"{row.raywatch_list_cold_ms:.2f}",
+                    f"{row.raywatch_list_warm_p95_ms:.2f}",
                     get_p95,
-                    ray_p95,
+                    ray_cold,
+                    ray_warm,
                     ray_count,
                 ]
             )
@@ -197,26 +215,29 @@ async def collect_scale_rows(
     submitted_ray_jobs = 0
     for scale in scales:
         seed_raywatch_jobs(scale, scenario_id=scale)
-        list_sample = await measure_raywatch_jobs_list()
+        list_cold_ms, list_warm_p95_ms = await measure_raywatch_jobs_list()
         if scale > 0:
             prefix = f"bench-{scale:04d}"
             job_id = f"{prefix}-job-{min(scale - 1, scale // 2):06d}"
-            get_sample = await measure_raywatch_job_get(job_id)
+            get_warm_p95_ms = await measure_raywatch_job_get_warm(job_id)
         else:
-            get_sample = LatencySample(0.0, 0.0, 0.0, 0)
+            get_warm_p95_ms = 0.0
 
-        ray_sample: LatencySample | None = None
+        ray_cold_ms: float | None = None
+        ray_warm_p95_ms: float | None = None
         ray_count: int | None = None
         if include_ray_dashboard:
             submitted_ray_jobs = await ensure_ray_job_history_at_least(scale, submitted_ray_jobs)
-            ray_sample, ray_count = await measure_ray_dashboard_jobs_api()
+            ray_cold_ms, ray_warm_p95_ms, ray_count = await measure_ray_dashboard_jobs_api()
 
         rows.append(
             ScaleLatencyRow(
                 job_count=scale,
-                raywatch_list=list_sample,
-                raywatch_get=get_sample,
-                ray_dashboard_jobs=ray_sample,
+                raywatch_list_cold_ms=list_cold_ms,
+                raywatch_list_warm_p95_ms=list_warm_p95_ms,
+                raywatch_get_warm_p95_ms=get_warm_p95_ms,
+                ray_dashboard_list_cold_ms=ray_cold_ms,
+                ray_dashboard_list_warm_p95_ms=ray_warm_p95_ms,
                 ray_jobs_in_payload=ray_count,
             )
         )

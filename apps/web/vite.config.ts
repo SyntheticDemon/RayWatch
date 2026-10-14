@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
+const apiTarget = process.env.RAYWATCH_API_PROXY ?? "http://localhost:8080";
 
 export default defineConfig({
   plugins: [react()],
@@ -16,9 +17,14 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
+        target: apiTarget,
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, ""),
+      },
+      "/ws": {
+        target: apiTarget,
+        changeOrigin: true,
+        ws: true,
       },
     },
   },

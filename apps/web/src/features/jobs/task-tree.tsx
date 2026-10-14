@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { TaskSummary } from "@/shared/api/client";
 
 type TaskTreeProps = {
@@ -6,12 +8,12 @@ type TaskTreeProps = {
   onSelect: (taskId: string) => void;
 };
 
-type TreeNode = {
+export type TreeNode = {
   task: TaskSummary;
   children: TreeNode[];
 };
 
-function buildForest(tasks: TaskSummary[]): TreeNode[] {
+export function buildForest(tasks: TaskSummary[]): TreeNode[] {
   const byId = new Map(tasks.map((t) => [t.task_id, t]));
   const childMap = new Map<string, TaskSummary[]>();
   const roots: TaskSummary[] = [];
@@ -40,13 +42,20 @@ function TreeRow({
   depth,
   selectedTaskId,
   onSelect,
+  expanded,
+  onToggle,
 }: {
   node: TreeNode;
   depth: number;
   selectedTaskId: string | null;
   onSelect: (id: string) => void;
+  expanded: Set<string>;
+  onToggle: (id: string) => void;
 }) {
   const { task } = node;
+  const hasChildren = node.children.length > 0;
+  const isOpen = expanded.has(task.task_id);
+
   return (
     <>
       <tr
@@ -54,7 +63,21 @@ function TreeRow({
         onClick={() => onSelect(task.task_id)}
       >
         <td style={{ paddingLeft: `${depth * 1.25}rem` }}>
-          {node.children.length > 0 ? "▸ " : ""}
+          {hasChildren ? (
+            <button
+              type="button"
+              className="tree-toggle"
+              aria-expanded={isOpen}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle(task.task_id);
+              }}
+            >
+              {isOpen ? "▾" : "▸"}
+            </button>
+          ) : (
+            <span className="tree-spacer" />
+          )}
           {task.name || task.func_or_class || "task"}
         </td>
         <td>
@@ -62,21 +85,36 @@ function TreeRow({
         </td>
         <td className="mono truncate">{task.task_id}</td>
       </tr>
-      {node.children.map((child) => (
-        <TreeRow
-          key={child.task.task_id}
-          node={child}
-          depth={depth + 1}
-          selectedTaskId={selectedTaskId}
-          onSelect={onSelect}
-        />
-      ))}
+      {hasChildren &&
+        isOpen &&
+        node.children.map((child) => (
+          <TreeRow
+            key={child.task.task_id}
+            node={child}
+            depth={depth + 1}
+            selectedTaskId={selectedTaskId}
+            onSelect={onSelect}
+            expanded={expanded}
+            onToggle={onToggle}
+          />
+        ))}
     </>
   );
 }
 
 export function TaskTree({ tasks, selectedTaskId, onSelect }: TaskTreeProps) {
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const forest = buildForest(tasks);
+
+  const onToggle = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   if (forest.length === 0) {
     return <p className="muted">No tasks in index yet.</p>;
   }
@@ -97,6 +135,8 @@ export function TaskTree({ tasks, selectedTaskId, onSelect }: TaskTreeProps) {
             depth={0}
             selectedTaskId={selectedTaskId}
             onSelect={onSelect}
+            expanded={expanded}
+            onToggle={onToggle}
           />
         ))}
       </tbody>
