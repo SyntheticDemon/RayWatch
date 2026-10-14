@@ -24,20 +24,53 @@ for _ in $(seq 1 30); do
 done
 curl -sf "http://127.0.0.1:${API_PORT}/health" >/dev/null
 
-JOB_ID="$(curl -sf "http://127.0.0.1:${API_PORT}/jobs?limit=50" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-items=d.get('items') or []
-# Prefer a job that already has indexed tasks (demo task-heavy job).
-for j in items:
-    if (j.get('task_total') or 0) > 0:
-        print(j['job_id'])
+pick_job_with_tasks() {
+  python3 -c "
+import json,sys,urllib.parse,urllib.request
+api='http://127.0.0.1:${API_PORT}'
+items=[]
+cursor=None
+while True:
+    url=f'{api}/jobs?limit=100'
+    if cursor:
+        url += f'&cursor={urllib.parse.quote(cursor, safe=\"\")}'
+    with urllib.request.urlopen(url) as resp:
+        d=json.load(resp)
+    items.extend(d.get('items') or [])
+    cursor=d.get('next_cursor')
+    if not cursor:
         break
-else:
-    print(items[0]['job_id'] if items else '')
-")"
+
+def task_count(job_id: str) -> int:
+    with urllib.request.urlopen(f'{api}/jobs/{job_id}/tasks?limit=5') as resp:
+        body=json.load(resp)
+    return len(body.get('items') or [])
+
+candidates=[j['job_id'] for j in items if 'demo_tasks' in j.get('job_id','')]
+candidates += [j['job_id'] for j in items]
+seen=set()
+for job_id in candidates:
+    if job_id in seen:
+        continue
+    seen.add(job_id)
+    if task_count(job_id) > 0:
+        print(job_id)
+        sys.exit(0)
+sys.exit(1)
+"
+}
+
+JOB_ID=""
+for _ in $(seq 1 12); do
+  curl -sf -X POST "http://127.0.0.1:${API_PORT}/sync/trigger" >/dev/null || true
+  sleep 3
+  if JOB_ID="$(pick_job_with_tasks)"; then
+    break
+  fi
+  JOB_ID=""
+done
 if [[ -z "${JOB_ID}" ]]; then
-  echo "No jobs from live API" >&2
+  echo "No job with indexed tasks after demo-ray (sync retries exhausted)" >&2
   exit 1
 fi
 echo "==> Live job: ${JOB_ID}"
@@ -55,13 +88,14 @@ else:
 
 TASKS="$(curl -sf "http://127.0.0.1:${API_PORT}/jobs/${JOB_ID}/tasks?limit=50")"
 echo "${TASKS}" | python3 -c "
-import json,sys
+import json,os,sys
 b=json.load(sys.stdin)
 items=b.get('items') or []
 print('tasks for job:', len(items))
 assert 'sync' in b
-if len(items) == 0:
-    print('warn: no tasks indexed for chosen job (Ray may have dropped task state)')
+if len(items) == 0 and os.environ.get('VERIFY_LIVE_REQUIRE_TASKS', '1') == '1':
+    print('error: expected indexed tasks after demo-ray sync', file=sys.stderr)
+    sys.exit(1)
 "
 
 echo "==> Integration tests (live Ray)"
