@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from raywatch.model.ingest import IngestBatch, IngestOp
@@ -42,6 +43,33 @@ def _task_error_message(row: dict[str, Any]) -> str | None:
     return text or None
 
 
+def _parse_task_time(value: float | int | str | None) -> datetime | None:
+    if value is None or value == "":
+        return None
+    ts = float(value)
+    if ts > 1e14:
+        ts /= 1e9
+    elif ts > 1e12:
+        ts /= 1e3
+    return datetime.fromtimestamp(ts, tz=timezone.utc)
+
+
+def _task_started_at(row: dict[str, Any]) -> datetime | None:
+    for key in ("start_time_ms", "start_time", "creation_time_ms", "creation_time"):
+        parsed = _parse_task_time(row.get(key))
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _task_ended_at(row: dict[str, Any]) -> datetime | None:
+    for key in ("end_time_ms", "end_time", "finish_time_ms"):
+        parsed = _parse_task_time(row.get(key))
+        if parsed is not None:
+            return parsed
+    return None
+
+
 def _map_task_status(raw: str | None) -> TaskStatus:
     if raw is None:
         return TaskStatus.PENDING
@@ -77,7 +105,13 @@ def normalize_tasks_payload(
             actor_id=str(row.get("actor_id") or "") if row.get("actor_id") else None,
             parent_task_id=str(row.get("parent_task_id") or "") or None,
             attempt_count=_attempt_count(row),
+            attempt_number=int(row.get("attempt_number") or 0),
+            node_id=str(row.get("node_id") or "") or None,
+            worker_pid=int(row["worker_pid"]) if row.get("worker_pid") not in (None, "") else None,
+            task_type=str(row.get("type") or ""),
             error_message=_task_error_message(row),
+            started_at=_task_started_at(row),
+            ended_at=_task_ended_at(row),
         )
         ops.append(IngestOp(kind="upsert_task", task=task))
     return IngestBatch(ops=ops, cluster_epoch=cluster_epoch)

@@ -3,14 +3,19 @@ import { expect, test } from "@playwright/test";
 test("job detail nested tree expands parent and opens task drawer", async ({ page }) => {
   await page.goto("/jobs/01000000");
   await expect(page.getByRole("heading", { name: "Nested runs" })).toBeVisible();
-  await expect(page.getByText("train_step")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Expand train_step nested tasks/i })).toBeVisible();
 
   await page
     .getByRole("button", { name: /Expand train_step nested tasks/i })
     .click();
-  await expect(page.getByText("eval_step")).toBeVisible();
+  await expect(page.getByRole("cell", { name: /^eval_step/ })).toBeVisible();
 
-  await page.getByRole("cell", { name: /eval_step/ }).click();
+  await page.getByRole("button", { name: "Pin train_step" }).click();
+  const pinned = page.getByRole("region", { name: "Pinned tasks" });
+  await expect(pinned).toBeVisible();
+  await expect(pinned.getByRole("button", { name: /^train_step/ })).toBeVisible();
+
+  await page.getByRole("cell", { name: /^eval_step/ }).click();
   await expect(page).toHaveURL(/task=/);
   await expect(page.getByRole("dialog", { name: "Task detail" })).toBeVisible();
 });

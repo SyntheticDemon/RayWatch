@@ -5,7 +5,8 @@ from __future__ import annotations
 import httpx
 from raywatch.adapter_ray.fixture_logs import load_fixture_job_logs
 from raywatch.adapter_ray.log_fetch_cache import get_cached_log, put_cached_log
-from raywatch.adapter_ray.ray_client import fetch_job_logs_text, ray_dashboard_base_url
+from raywatch.adapter_ray.job_log_scope import log_scope_for_job
+from raywatch.adapter_ray.ray_client import fetch_job_logs_text, fetch_state_log_file, ray_dashboard_base_url
 from raywatch.model.job import JobDetail
 
 
@@ -30,18 +31,33 @@ async def fetch_logs_for_job(job: JobDetail, *, cluster_epoch: str) -> str:
         put_cached_log(cluster_epoch, job.job_id, hint)
         return hint
 
-    submission_id = job.job_id
+    scope = log_scope_for_job(job)
+    if scope.submission_id is None and (scope.driver_pid is None or not scope.driver_node_id):
+        raise ValueError(
+            f"No job-scoped log for '{job.job_id}'. "
+            "RayWatch will not load cluster-wide logs. "
+            "Submission jobs need a submission id; driver jobs need a driver pid and node id."
+        )
     async with httpx.AsyncClient() as client:
         try:
-            text = await fetch_job_logs_text(client, submission_id)
+            if scope.submission_id:
+                try:
+                    text = await fetch_state_log_file(
+                        client, submission_id=scope.submission_id
+                    )
+                except httpx.HTTPStatusError:
+                    text = await fetch_job_logs_text(client, scope.submission_id)
+            else:
+                text = await fetch_state_log_file(
+                    client,
+                    pid=scope.driver_pid,
+                    node_id=scope.driver_node_id,
+                )
             put_cached_log(cluster_epoch, job.job_id, text)
             return text
         except httpx.HTTPStatusError as exc:
-            if exc.response.status_code != 404:
-                raise
+            detail = exc.response.text[:400]
             raise ValueError(
-                f"Ray has no job '{submission_id}' at {ray_dashboard_base_url()}. "
-                "Fixture ids like 01000000 are not real Ray jobs — use `make dev-api` "
-                "(fixture logs) or `make demo-ray` + `make dev-api-live` and open a "
-                "submission_id from GET /jobs."
+                f"Ray refused logs for job '{job.job_id}' at {ray_dashboard_base_url()} "
+                f"({exc.response.status_code}). {detail}"
             ) from exc

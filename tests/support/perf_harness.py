@@ -10,6 +10,7 @@ from pathlib import Path
 from raywatch.api.state import live_cache
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus
+from raywatch.model.task import TaskStatus, TaskSummary
 
 from support.request_latency import HonestLatencyReport, measure_fresh_client
 
@@ -78,6 +79,66 @@ async def measure_jobs_list_honest(limit: int = 50) -> HonestLatencyReport:
 async def measure_job_get_honest(job_id: str) -> HonestLatencyReport:
     return await measure_fresh_client(
         f"/jobs/{job_id}",
+        iterations=perf_iterations(),
+        warmup=perf_warmup(),
+    )
+
+
+def seed_tasks(job_id: str, count: int, prefix: str = "perf-task") -> None:
+    ops = [
+        IngestOp(
+            kind="upsert_task",
+            task=TaskSummary(
+                task_id=f"{prefix}-{index:06d}",
+                job_id=job_id,
+                status=TaskStatus.RUNNING,
+                name=f"step_{index}",
+            ),
+        )
+        for index in range(count)
+    ]
+    live_cache.apply_ingest_batch(IngestBatch(ops=ops))
+
+
+async def measure_cluster_overview_honest() -> HonestLatencyReport:
+    return await measure_fresh_client(
+        "/cluster/overview",
+        iterations=perf_iterations(),
+        warmup=perf_warmup(),
+    )
+
+
+async def measure_job_tasks_honest(job_id: str, limit: int = 100) -> HonestLatencyReport:
+    return await measure_fresh_client(
+        f"/jobs/{job_id}/tasks?limit={limit}",
+        iterations=perf_iterations(),
+        warmup=perf_warmup(),
+    )
+
+
+async def measure_task_get_honest(task_id: str) -> HonestLatencyReport:
+    return await measure_fresh_client(
+        f"/tasks/{task_id}",
+        iterations=perf_iterations(),
+        warmup=perf_warmup(),
+    )
+
+
+async def measure_job_logs_honest(job_id: str) -> HonestLatencyReport:
+    from raywatch.adapter_ray.log_fetch_cache import put_cached_log
+
+    epoch = live_cache.sync_meta().cluster_epoch
+    put_cached_log(epoch, job_id, "\n".join(f"perf-log-line-{i}" for i in range(400)))
+    return await measure_fresh_client(
+        f"/jobs/{job_id}/logs?tail_lines=100",
+        iterations=perf_iterations(),
+        warmup=perf_warmup(),
+    )
+
+
+async def measure_search_honest(q: str = "perf") -> HonestLatencyReport:
+    return await measure_fresh_client(
+        f"/search?q={q}&limit=20",
         iterations=perf_iterations(),
         warmup=perf_warmup(),
     )

@@ -78,6 +78,8 @@ export function ClusterPage() {
 
   const sync = overviewQuery.data?.sync ?? nodesQuery.data?.sync ?? objectsQuery.data?.sync;
   const overview = overviewQuery.data?.overview;
+  const memoryTotal =
+    overview?.utilization?.memory_bytes_total ?? overview?.memory_bytes_total ?? 0;
 
   return (
     <main className="cluster-page">
@@ -131,7 +133,7 @@ export function ClusterPage() {
           </div>
           <div className="cluster-summary-card">
             <span className="cluster-summary-label">Memory</span>
-            <span className="cluster-summary-value">{formatGiB(overview.memory_bytes_total)}</span>
+            <span className="cluster-summary-value">{formatGiB(memoryTotal)}</span>
           </div>
           <div className="cluster-summary-card">
             <span className="cluster-summary-label">Actors</span>
@@ -183,7 +185,9 @@ export function ClusterPage() {
                     className={nodeMatchesFocus(node.node_id) ? "row-highlight" : undefined}
                   >
                     <td className="mono cell-ellipsis" title={node.node_id}>
-                      {node.node_id.slice(0, 12)}…
+                      <Link to={`/cluster/nodes/${node.node_id}`} className="cell-link">
+                        {node.node_id.slice(0, 12)}…
+                      </Link>
                     </td>
                     <td>{node.hostname ?? "—"}</td>
                     <td>

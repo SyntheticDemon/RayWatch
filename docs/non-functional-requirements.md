@@ -119,8 +119,13 @@ Details: [docker-and-devkit.md](./docker-and-devkit.md).
 - Fine-grained RBAC per Ray job namespace  
 - Formal SLO/error budgets for hosted offerings  
 
+## Feature ↔ NFR mapping
+
+Per-feature NFR gates and gaps: [ray-dashboard-feature-matrix.md](./ray-dashboard-feature-matrix.md) (section **NFR coverage map**). Target: every operator feature has live E2E + NFR where measurable.
+
 ## Related
 
 - [architecture.md](./architecture.md)  
 - [testing.md](./testing.md)  
 - [product-vision.md](./product-vision.md)  
+- [ray-dashboard-feature-matrix.md](./ray-dashboard-feature-matrix.md)  

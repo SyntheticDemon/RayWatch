@@ -43,9 +43,19 @@ export function JobsPage() {
     filters.includeArchived,
     filters.jobKind,
     filters.columnFilters.jobId,
+    filters.columnFilters.submissionId,
     filters.columnFilters.status,
+    filters.columnFilters.jobType,
     filters.columnFilters.entrypoint,
+    filters.columnFilters.message,
+    filters.columnFilters.driverPid,
   ].join("|");
+
+  const [appliedFilter, setAppliedFilter] = useState(filterKey);
+  if (appliedFilter !== filterKey) {
+    setAppliedFilter(filterKey);
+    setCursor(undefined);
+  }
 
   const { data, isLoading, error, isFetching } = useQuery({
     queryKey: [
@@ -81,11 +91,6 @@ export function JobsPage() {
   });
 
   useEffect(() => {
-    setCursor(undefined);
-    setRows([]);
-  }, [filterKey]);
-
-  useEffect(() => {
     if (!data) return;
     if (!cursor) {
       setRows(data.items);
@@ -108,17 +113,8 @@ export function JobsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }),
   });
 
-  if (isLoading && rows.length === 0) {
-    return (
-      <div className="page-loading">
-        <div className="spinner" aria-hidden />
-        <p>Loading jobs…</p>
-      </div>
-    );
-  }
-  if (error) {
-    return <p className="error-banner">Could not load jobs. Is the API running on port 8080?</p>;
-  }
+  const showInitialLoad = isLoading && rows.length === 0;
+  const showEmpty = !showInitialLoad && !error && displayRows.length === 0;
 
   return (
     <main className="jobs-page">
@@ -244,12 +240,29 @@ export function JobsPage() {
         </div>
       </section>
 
+      {error && (
+        <p className="error-banner">Could not load jobs. Is the API running on port 8080?</p>
+      )}
+
       <section className="table-card">
-        <VirtualizedJobsTable
-          rows={displayRows}
-          columnFilters={filters.columnFilters}
-          onColumnFiltersChange={filters.setColumnFilters}
-        />
+        {showInitialLoad ? (
+          <p className="table-card-loading">Loading jobs…</p>
+        ) : showEmpty ? (
+          <p className="table-card-loading">
+            {filters.debouncedQ
+              ? `No jobs match “${filters.debouncedQ}”.`
+              : "No jobs match these filters."}
+          </p>
+        ) : (
+          <VirtualizedJobsTable
+            rows={displayRows}
+            columnFilters={filters.columnFilters}
+            onColumnFiltersChange={filters.setColumnFilters}
+          />
+        )}
+        {isFetching && !showInitialLoad && (
+          <p className="muted small">Updating results…</p>
+        )}
         {data?.next_cursor && (
           <footer className="table-footer">
             <Button

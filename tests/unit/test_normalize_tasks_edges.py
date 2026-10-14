@@ -45,3 +45,28 @@ def test_normalize_tasks_2_59_fixture_attempt_and_error() -> None:
     assert running.attempt_count == 1
     assert failed.attempt_count == 2
     assert failed.error_message == "WorkerCrashed"
+    assert running.started_at is not None
+    assert running.ended_at is not None
+    assert failed.started_at is not None
+
+
+def test_normalize_tasks_maps_start_time_ms() -> None:
+    payload = {
+        "data": {
+            "result": {
+                "result": [
+                    {
+                        "task_id": "t1",
+                        "job_id": "j1",
+                        "state": "RUNNING",
+                        "start_time_ms": 1710000000000,
+                    }
+                ]
+            }
+        }
+    }
+    batch = normalize_tasks_payload(payload, {})
+    task = batch.ops[0].task
+    assert task is not None
+    assert task.started_at is not None
+    assert task.started_at.year == 2024

@@ -19,6 +19,9 @@ export type JobSummary = {
   task_total: number;
   error_message: string | null;
   archived?: boolean;
+  driver_pid?: number | null;
+  submission_id?: string | null;
+  job_type?: string | null;
 };
 
 export type JobDetail = JobSummary & {
@@ -36,6 +39,10 @@ export type TaskSummary = {
   actor_id: string | null;
   parent_task_id: string | null;
   attempt_count: number;
+  attempt_number?: number;
+  node_id?: string | null;
+  worker_pid?: number | null;
+  task_type?: string;
   error_message: string | null;
   started_at: string | null;
   ended_at: string | null;
@@ -111,14 +118,25 @@ export type NodeSummary = {
 export type ActorSummary = {
   actor_id: string;
   class_name: string | null;
+  name?: string | null;
+  repr_name?: string | null;
   state: string | null;
   job_id: string | null;
   worker_id: string | null;
   node_id: string | null;
+  pid?: number | null;
+  ray_namespace?: string | null;
+  num_restarts?: number;
+  placement_group_id?: string | null;
 };
 
 export type NodesPage = {
   items: NodeSummary[];
+  sync: SyncMeta;
+};
+
+export type NodeResponse = {
+  node: NodeSummary;
   sync: SyncMeta;
 };
 
@@ -263,6 +281,10 @@ export function fetchClusterNodes(): Promise<NodesPage> {
   return fetchJson<NodesPage>("/cluster/nodes");
 }
 
+export function fetchClusterNode(nodeId: string): Promise<NodeResponse> {
+  return fetchJson<NodeResponse>(`/cluster/nodes/${encodeURIComponent(nodeId)}`);
+}
+
 export function fetchClusterActors(limit = 200): Promise<ActorsPage> {
   return fetchJson<ActorsPage>(`/cluster/actors${qs({ limit })}`);
 }
@@ -273,4 +295,28 @@ export function fetchClusterObjects(limit = 200): Promise<ObjectsPage> {
 
 export function fetchClusterActor(actorId: string): Promise<ActorResponse> {
   return fetchJson<ActorResponse>(`/cluster/actors/${encodeURIComponent(actorId)}`);
+}
+
+export type KillActorResponse = {
+  actor_id: string;
+  accepted: boolean;
+  message: string;
+  sync: SyncMeta;
+};
+
+export function killClusterActor(actorId: string): Promise<KillActorResponse> {
+  return fetchJson<KillActorResponse>(`/cluster/actors/${encodeURIComponent(actorId)}/kill`, {
+    method: "POST",
+  });
+}
+
+export type ActorLogsResponse = {
+  actor_id: string;
+  logs: string;
+  error_message?: string | null;
+  sync: SyncMeta;
+};
+
+export function fetchActorLogs(actorId: string): Promise<ActorLogsResponse> {
+  return fetchJson<ActorLogsResponse>(`/cluster/actors/${encodeURIComponent(actorId)}/logs`);
 }

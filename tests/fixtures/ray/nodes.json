@@ -6,7 +6,21 @@
           "node_id": "node-abc",
           "node_name": "ray-head",
           "state": "ALIVE",
-          "is_head_node": true
+          "is_head_node": true,
+          "resources_total": {
+            "CPU": 8,
+            "memory": 8796093022208,
+            "object_store_memory": 2199023255552
+          }
+        },
+        {
+          "node_id": "node-dead",
+          "node_name": "ray-worker-old",
+          "state": "DEAD",
+          "resources_total": {
+            "CPU": 64,
+            "memory": 4294967296000
+          }
         }
       ]
     }

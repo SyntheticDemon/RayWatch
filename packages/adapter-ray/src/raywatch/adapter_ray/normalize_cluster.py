@@ -66,14 +66,22 @@ def normalize_actors_payload(payload: dict[str, Any]) -> list[ActorSummary]:
         actor_id = str(row.get("actor_id") or row.get("ActorID") or row.get("id") or "")
         if not actor_id:
             continue
+        pid = row.get("pid")
+        restarts = row.get("num_restarts")
         actors.append(
             ActorSummary(
                 actor_id=actor_id,
                 class_name=str(row.get("class_name") or row.get("name") or "") or None,
+                name=str(row.get("name") or "") or None,
+                repr_name=str(row.get("repr_name") or "") or None,
                 state=str(row.get("state") or row.get("State") or "") or None,
                 job_id=str(row.get("job_id") or "") or None,
                 worker_id=str(row.get("worker_id") or "") or None,
                 node_id=str(row.get("node_id") or "") or None,
+                pid=int(pid) if pid not in (None, "") else None,
+                ray_namespace=str(row.get("ray_namespace") or "") or None,
+                num_restarts=int(restarts) if restarts not in (None, "") else 0,
+                placement_group_id=str(row.get("placement_group_id") or "") or None,
             )
         )
     return actors

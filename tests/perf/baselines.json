@@ -21,6 +21,32 @@
       "job_count": 5000,
       "p95_ms": 1.38,
       "cold_ms": 1.76
+    },
+    "cluster_overview": {
+      "job_count": 1000,
+      "p95_ms": 5.0,
+      "cold_ms": 15.0
+    },
+    "job_tasks_1000": {
+      "job_count": 1,
+      "task_count": 1000,
+      "p95_ms": 25.0,
+      "cold_ms": 50.0
+    },
+    "task_get_1000": {
+      "task_count": 1000,
+      "p95_ms": 5.0,
+      "cold_ms": 15.0
+    },
+    "search_1000_jobs": {
+      "job_count": 1000,
+      "p95_ms": 15.0,
+      "cold_ms": 30.0
+    },
+    "job_logs_cached": {
+      "job_count": 1,
+      "p95_ms": 50.0,
+      "cold_ms": 100.0
     }
   }
 }

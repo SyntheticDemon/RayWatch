@@ -61,7 +61,7 @@ async def websocket_job_logs(
             if text:
                 await websocket.send_text(text)
         else:
-            async for chunk in stream_ray_job_log_tail(job.job_id):
+            async for chunk in stream_ray_job_log_tail(job):
                 await websocket.send_text(chunk)
     except (WebSocketDisconnect, asyncio.CancelledError):
         pass

@@ -59,7 +59,14 @@ CI job: start **Ray head** in a container (pinned image matching `SUPPORTED_RAY_
 
 ## 4. End-to-end (optional CI nightly or pre-release)
 
-**Playwright** (`apps/web/e2e/`, `make test-e2e`): `make install-e2e` downloads Chromium if missing; then starts fixture API + `vite preview` automatically (see `playwright.config.ts`). CI runs `npx playwright install chromium --with-deps` before e2e.
+**Playwright** (`apps/web/e2e/`):
+
+| Command | Stack |
+|---------|--------|
+| `make test-e2e` | **Live Ray** (Docker): `scripts/e2e-ray-harness.sh` — port hygiene, demo jobs, live API, `e2e/live/*` |
+| `make test-e2e-fixture` | Offline UI only: `e2e/fixture/*` + fixture API (fast PR gate in CI `web` job) |
+
+CI job `e2e-live` runs `make test-e2e` when Docker is available.
 
 | Spec | Covers |
 |------|--------|

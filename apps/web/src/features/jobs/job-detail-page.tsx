@@ -1,12 +1,14 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
 import { TaskDrawer } from "@/features/jobs/task-drawer";
+import { TaskGanttTimeline } from "@/features/jobs/task-gantt-timeline";
 import { TaskTree } from "@/features/jobs/task-tree";
 import { fetchJob, fetchJobTasks, fetchTask, stopJob, triggerSync } from "@/shared/api/client";
 import { useJobLogs } from "@/shared/hooks/use-job-logs";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
+import { formatWhen } from "@/shared/lib/time";
 import { Button } from "@/shared/ui/primitives";
 import { LogViewer } from "@/shared/ui/log-viewer";
 import { jobDetailBreadcrumbs } from "@/shared/ui/breadcrumb-trail";
@@ -16,8 +18,10 @@ import { SyncStatus } from "@/shared/ui/sync-status";
 function filterLogsForTask(logs: string, taskId: string | null): string {
   if (!taskId) return logs;
   const needle = taskId.toLowerCase();
-  const lines = logs.split("\n").filter((line) => line.toLowerCase().includes(needle));
-  return lines.length ? lines.join("\n") : logs;
+  return logs
+    .split("\n")
+    .filter((line) => line.toLowerCase().includes(needle))
+    .join("\n");
 }
 
 export function JobDetailPage() {
@@ -27,7 +31,7 @@ export function JobDetailPage() {
   const logLineRaw = searchParams.get("log_line");
   const highlightLogLine = logLineRaw ? Number.parseInt(logLineRaw, 10) : null;
   const [stopConfirm, setStopConfirm] = useState(false);
-  const [logsPaused, setLogsPaused] = useState(false);
+  const [logsPaused, setLogsPaused] = useState(true);
   const queryClient = useQueryClient();
 
   const { connected } = useLiveSync(jobId);
@@ -159,29 +163,46 @@ export function JobDetailPage() {
             : stopMutation.data?.message}
         </p>
       )}
-      <p className="mono entrypoint">{job.entrypoint}</p>
-      <dl className="meta-grid">
+      <dl className="job-info-grid">
         <dt>Status</dt>
         <dd>{job.status}</dd>
+        <dt>Job ID</dt>
+        <dd className="mono">{job.job_id}</dd>
+        <dt>Submission ID</dt>
+        <dd className="mono">{job.metadata.submission_id || "—"}</dd>
+        <dt>Ray job ID</dt>
+        <dd className="mono">{job.metadata.ray_internal_job_id || "—"}</dd>
+        <dt>Started</dt>
+        <dd>{formatWhen(job.started_at)}</dd>
+        <dt>Ended</dt>
+        <dd>{formatWhen(job.ended_at)}</dd>
+        <dt>Driver PID</dt>
+        <dd>{job.driver_pid ?? "—"}</dd>
         <dt>Tasks</dt>
         <dd>
           {job.task_running} running · {job.task_failed} failed · {job.task_total} total
         </dd>
-        {Object.entries(job.metadata).map(([key, value]) => (
-          <Fragment key={key}>
-            <dt>{key}</dt>
-            <dd>{value}</dd>
-          </Fragment>
-        ))}
+        <dt>Entrypoint</dt>
+        <dd className="mono">{job.entrypoint || "—"}</dd>
+        {job.error_message ? (
+          <>
+            <dt>Message</dt>
+            <dd>{job.error_message}</dd>
+          </>
+        ) : null}
       </dl>
 
+      <div className="job-detail-layout">
       <section className="panel">
         <h2>Nested runs</h2>
+        <p className="muted small">Grouped by name under the parent task, the same way Ray nests them. Expand a group to see each task.</p>
+        {tasks.length > 0 && <TaskGanttTimeline tasks={tasks} focusTaskId={selectedTaskId} />}
         {tasksQuery.isLoading ? (
           <p className="muted">Loading tasks…</p>
         ) : (
           <>
             <TaskTree
+              jobId={jobId}
               tasks={tasks}
               selectedTaskId={selectedTaskId}
               onSelect={(id) => setSearchParams({ task: id })}
@@ -202,16 +223,19 @@ export function JobDetailPage() {
         )}
       </section>
 
-      {selectedTaskId && taskQuery.data && (
-        <TaskDrawer task={taskQuery.data.task} onClose={() => setSearchParams({})} />
-      )}
-
-      <section className="panel">
+      <section className="panel job-detail-logs">
         <h2>{selectedTaskId ? "Task logs (filtered)" : "Job logs"}</h2>
         <p className="muted" style={{ marginTop: "-0.25rem", marginBottom: "0.75rem" }}>
-          {logsStreaming
-            ? "Live tail via Ray log WebSocket (recent history loaded over HTTP first)."
-            : "Tails the latest lines first, then polls for new content."}
+          {job.metadata.submission_id
+            ? `Driver log for submission ${job.metadata.submission_id} only. `
+            : job.driver_pid
+              ? `Process log for driver pid ${job.driver_pid} only. `
+              : "No cluster-wide log. "}
+          {logsPaused
+            ? "Tail is paused. Resume to follow new lines."
+            : logsStreaming
+              ? "Following this job's log."
+              : "Following new lines from this job."}
         </p>
         {logsLoading ? (
           <p className="muted">Loading logs…</p>
@@ -230,6 +254,11 @@ export function JobDetailPage() {
           />
         )}
       </section>
+      </div>
+
+      {selectedTaskId && taskQuery.data && (
+        <TaskDrawer task={taskQuery.data.task} onClose={() => setSearchParams({})} />
+      )}
     </main>
   );
 }

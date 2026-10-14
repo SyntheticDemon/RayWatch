@@ -97,6 +97,7 @@ export function InternalRunsPage() {
             </p>
           )}
           <TaskTree
+            jobId={selectedJob.job_id}
             tasks={tasksQuery.data.items}
             selectedTaskId={null}
             onSelect={(id) => {

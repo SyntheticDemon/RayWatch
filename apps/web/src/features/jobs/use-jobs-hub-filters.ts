@@ -8,11 +8,56 @@ export type TimePreset = "all" | "1h" | "24h" | "7d" | "custom";
 
 export type ColumnFilters = {
   jobId: string;
+  submissionId: string;
   status: string;
+  jobType: string;
   entrypoint: string;
+  message: string;
+  driverPid: string;
 };
 
-const DEFAULT_COLUMNS: ColumnFilters = { jobId: "", status: "", entrypoint: "" };
+export type JobColumnRow = {
+  job_id: string;
+  status: string;
+  entrypoint: string;
+  error_message?: string | null;
+  submission_id?: string | null;
+  job_type?: string | null;
+  driver_pid?: number | null;
+};
+
+export function applyJobColumnFilters<T extends JobColumnRow>(
+  items: T[],
+  columnFilters: ColumnFilters,
+): T[] {
+  const jobId = columnFilters.jobId.trim().toLowerCase();
+  const submissionId = columnFilters.submissionId.trim().toLowerCase();
+  const status = columnFilters.status.trim().toLowerCase();
+  const jobType = columnFilters.jobType.trim().toLowerCase();
+  const entrypoint = columnFilters.entrypoint.trim().toLowerCase();
+  const message = columnFilters.message.trim().toLowerCase();
+  const driverPid = columnFilters.driverPid.trim().toLowerCase();
+  return items.filter((job) => {
+    if (jobId && !job.job_id.toLowerCase().includes(jobId)) return false;
+    if (submissionId && !(job.submission_id ?? "").toLowerCase().includes(submissionId)) return false;
+    if (status && !job.status.toLowerCase().includes(status)) return false;
+    if (jobType && !(job.job_type ?? "").toLowerCase().includes(jobType)) return false;
+    if (entrypoint && !job.entrypoint.toLowerCase().includes(entrypoint)) return false;
+    if (message && !(job.error_message ?? "").toLowerCase().includes(message)) return false;
+    if (driverPid && !String(job.driver_pid ?? "").toLowerCase().includes(driverPid)) return false;
+    return true;
+  });
+}
+
+const DEFAULT_COLUMNS: ColumnFilters = {
+  jobId: "",
+  submissionId: "",
+  status: "",
+  jobType: "",
+  entrypoint: "",
+  message: "",
+  driverPid: "",
+};
 
 /** Compute API window at fetch time — not on every React render (avoids refetch loops). */
 export function apiStartedAfter(timePreset: TimePreset, afterParam: string): string | undefined {
@@ -58,8 +103,12 @@ export function useJobsHubFilters() {
   const columnFilters: ColumnFilters = useMemo(
     () => ({
       jobId: params.get("col_job") ?? "",
+      submissionId: params.get("col_sub") ?? "",
       status: params.get("col_status") ?? "",
+      jobType: params.get("col_type") ?? "",
       entrypoint: params.get("col_entry") ?? "",
+      message: params.get("col_msg") ?? "",
+      driverPid: params.get("col_pid") ?? "",
     }),
     [params],
   );
@@ -97,22 +146,16 @@ export function useJobsHubFilters() {
   const setColumnFilters = (cols: ColumnFilters) =>
     patch({
       col_job: cols.jobId || null,
+      col_sub: cols.submissionId || null,
       col_status: cols.status || null,
+      col_type: cols.jobType || null,
       col_entry: cols.entrypoint || null,
+      col_msg: cols.message || null,
+      col_pid: cols.driverPid || null,
     });
 
-  function applyColumnFilters<T extends { job_id: string; status: string; entrypoint: string }>(
-    items: T[],
-  ): T[] {
-    const j = columnFilters.jobId.trim().toLowerCase();
-    const s = columnFilters.status.trim().toLowerCase();
-    const e = columnFilters.entrypoint.trim().toLowerCase();
-    return items.filter((job) => {
-      if (j && !job.job_id.toLowerCase().includes(j)) return false;
-      if (s && !job.status.toLowerCase().includes(s)) return false;
-      if (e && !job.entrypoint.toLowerCase().includes(e)) return false;
-      return true;
-    });
+  function applyColumnFilters<T extends JobColumnRow>(items: T[]): T[] {
+    return applyJobColumnFilters(items, columnFilters);
   }
 
   return {

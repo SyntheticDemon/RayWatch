@@ -1,0 +1,5 @@
+{
+  "data": {
+    "autoscalingStatus": "Cluster status: 2 nodes\n - ResourceUsage: 2.5/20.0 CPU, 1.0 GiB/10.29 GiB memory, 0.5 GiB/4.41 GiB object_store_memory\n"
+  }
+}

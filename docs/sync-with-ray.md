@@ -68,6 +68,18 @@ flowchart LR
 - Chaos: pause collector 60s → API returns `stale: true`.  
 - Property: after reconcile, live index ⊆ Ray State API listing (for same epoch).
 
+## Collector pacing (live Ray)
+
+The API read path stays indexed; the collector still talks to Ray on a schedule. To reduce load on the head node:
+
+| Env | Default | Meaning |
+|-----|---------|---------|
+| `RAYWATCH_SYNC_INTERVAL_SEC` | `5` | Seconds between sync ticks |
+| `RAYWATCH_SYNC_TASKS_EVERY` | `1` | Fetch `/api/v0/tasks` every N ticks |
+| `RAYWATCH_SYNC_CLUSTER_EVERY` | `2` | Fetch nodes, actors, objects, and cluster status every N ticks |
+
+Jobs are refreshed every tick. Tasks and cluster metadata can lag by one interval when `EVERY` &gt; 1.
+
 ## Related
 
 - [architecture-levels.md](./architecture-levels.md)  

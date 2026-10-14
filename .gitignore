@@ -21,6 +21,9 @@ apps/web/playwright-report/
 # Python env
 .venv/
 
+# Local dev run state (pids, logs)
+.dev/
+
 # Env & secrets
 .env
 .env.local

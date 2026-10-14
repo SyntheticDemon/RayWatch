@@ -5,6 +5,14 @@ import { Button, Input, Select } from "@/shared/ui/primitives";
 
 type LogLevel = "ALL" | "ERROR" | "WARN" | "INFO" | "DEBUG";
 
+/** Cap DOM nodes so huge cluster logs do not freeze the tab. */
+export const MAX_DOM_LOG_LINES = 2500;
+
+export function capLogLinesForDom<T>(lines: T[], max = MAX_DOM_LOG_LINES): { domLines: T[]; hidden: number } {
+  if (lines.length <= max) return { domLines: lines, hidden: 0 };
+  return { domLines: lines.slice(-max), hidden: lines.length - max };
+}
+
 type LogViewerProps = {
   text: string;
   errorMessage?: string | null;
@@ -62,6 +70,8 @@ export function LogViewer({
     });
     return out;
   }, [lines, level, filter]);
+
+  const { domLines, hidden: hiddenLineCount } = capLogLinesForDom(visibleLines);
 
   useEffect(() => {
     if (!followTail || pollPaused) return;
@@ -159,13 +169,18 @@ export function LogViewer({
           Download
         </Button>
         {pollPaused && <span className="log-toolbar-hint">Tail paused</span>}
+        {hiddenLineCount > 0 && (
+          <span className="log-toolbar-hint">
+            Showing last {MAX_DOM_LOG_LINES.toLocaleString()} of {visibleLines.length.toLocaleString()} lines
+          </span>
+        )}
         {copyHint && <span className="log-toolbar-hint">{copyHint}</span>}
       </div>
       <div ref={scrollRef} className={`log-viewer log-viewer-lines ${wrap ? "log-wrap" : ""}`}>
-        {visibleLines.length === 0 ? (
+        {domLines.length === 0 ? (
           <p className="log-empty">{emptyMessage}</p>
         ) : (
-          visibleLines.map(({ line, lineNo }) => {
+          domLines.map(({ line, lineNo }) => {
             const highlighted = highlightLine === lineNo;
             return (
               <div

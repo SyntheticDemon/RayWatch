@@ -5,10 +5,9 @@
 #   ./scripts/demo_occupied_ray.sh              # default: 6 quick jobs + 1 task-heavy + 1 loggy runner
 #   DEMO_RAY_JOBS=15 ./scripts/demo_occupied_ray.sh
 #
-# Then:
-#   make dev-api-live
-#   cd apps/web && npm run dev
-#   open http://localhost:3000
+# Or start the full stack:
+#   make dev-up
+#   # or: ./scripts/dev-up.sh
 #
 set -euo pipefail
 

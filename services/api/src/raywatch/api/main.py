@@ -27,10 +27,10 @@ async def lifespan(app: FastAPI):
         os.environ.setdefault("RAYWATCH_FIXTURE_JOBS", str(fixture_default))
 
     job_snapshot_store().ensure_schema()
-    await sync_active_jobs(live_cache)
     interval = float(os.environ.get("RAYWATCH_SYNC_INTERVAL_SEC", "5"))
+    # Do not block HTTP startup on first Ray fetch (remote clusters can be slow).
     sync_task = asyncio.create_task(run_sync_loop(live_cache, interval_sec=interval))
-    logger.info("RayWatch API started; sync interval %.1fs", interval)
+    logger.info("RayWatch API listening; Ray sync runs in background (every %.1fs)", interval)
     yield
     sync_task.cancel()
     with suppress(asyncio.CancelledError):

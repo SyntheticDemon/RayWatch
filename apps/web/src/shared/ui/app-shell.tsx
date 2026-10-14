@@ -9,6 +9,7 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
+  const onOverview = location.pathname.startsWith("/overview");
   const onJobs = location.pathname === "/" || location.pathname.startsWith("/jobs");
   const onCluster = location.pathname.startsWith("/cluster");
   const onActors = location.pathname.startsWith("/actors");
@@ -23,6 +24,9 @@ export function AppShell({ children }: AppShellProps) {
               RayWatch
             </Link>
             <nav className="app-nav" aria-label="Primary">
+              <Link to="/overview" className={`app-nav-link ${onOverview ? "active" : ""}`}>
+                Overview
+              </Link>
               <Link to="/" className={`app-nav-link ${onJobs ? "active" : ""}`}>
                 Jobs
               </Link>

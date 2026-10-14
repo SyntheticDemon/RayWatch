@@ -14,7 +14,10 @@
           "func_or_class_name": "train_step",
           "parent_task_id": null,
           "worker_id": "worker-1",
-          "actor_id": null
+          "actor_id": null,
+          "node_id": "node-abc",
+          "start_time_ms": 1710000000000,
+          "end_time_ms": 1710001800000
         },
         {
           "task_id": "bbbbccccddddeeeeffffffffaaaabbbbbbbbbbbb02000000",
@@ -26,7 +29,9 @@
           "parent_task_id": "aaaabbbbccccddddeeeeeeeeffffffffffffffff02000000",
           "worker_id": "worker-2",
           "actor_id": null,
-          "error_type": "WorkerCrashed"
+          "error_type": "WorkerCrashed",
+          "start_time_ms": 1710001800000,
+          "end_time_ms": 1710002400000
         },
         {
           "task_id": "ccccddddeeeeffffaaaabbbbccccdddd11111111",

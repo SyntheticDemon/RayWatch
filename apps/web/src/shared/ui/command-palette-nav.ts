@@ -5,6 +5,7 @@ export type PaletteNavItem =
   | { type: "command"; id: string; label: string; path: string };
 
 export const PALETTE_COMMANDS: Array<{ id: string; label: string; path: string; keywords: string }> = [
+  { id: "overview", label: "Go to Overview", path: "/overview", keywords: "overview summary home" },
   { id: "jobs", label: "Go to Jobs", path: "/", keywords: "jobs home list" },
   { id: "actors", label: "Go to Actors", path: "/actors", keywords: "actors ray actor" },
   { id: "cluster", label: "Go to Cluster", path: "/cluster", keywords: "cluster nodes objects" },

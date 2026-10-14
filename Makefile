@@ -1,16 +1,26 @@
-.PHONY: help install test coverage lint fmt typecheck integration dev-api ray-up ray-down test-integration-ray ray-smoke benchmark benchmark-ray perf perf-baseline demo-ray install-e2e test-e2e verify-live test-all
+.PHONY: help install test coverage lint fmt typecheck integration dev dev-api dev-api-live dev-up dev-down dev-clean ray-up ray-down test-integration-ray ray-smoke benchmark benchmark-ray perf perf-baseline demo-ray install-e2e test-e2e verify-live test-all
 
 test-e2e: install-e2e
-	cd apps/web && npm run test:e2e
+	bash scripts/e2e-ray-harness.sh
+
+test-e2e-fixture: install-e2e
+	cd apps/web && npm run test:e2e:fixture
 
 install-e2e:
 	cd apps/web && npx playwright install chromium
 
 test-all: test lint typecheck perf
 	cd apps/web && npm run test
-	$(MAKE) test-e2e
+	$(MAKE) test-e2e-fixture
 
 ci: test-all coverage
+
+# NFR + live Ray e2e (Docker required). Run after merge or nightly.
+ci-live: verify-live perf
+	$(MAKE) test-e2e
+
+parity-gate:
+	bash scripts/parity-gate.sh
 
 verify-live:
 	bash scripts/verify_live_stack.sh
@@ -19,7 +29,7 @@ RAY_VERSION ?= 2.59.0
 export RAY_VERSION
 
 help:
-	@echo "Targets: install, test, perf, lint, test-integration-ray, ray-up, ray-down, dev-api"
+	@echo "Targets: install, test, perf, lint, dev, dev-down, dev-up (foreground), ray-up, dev-api-live"
 
 install:
 	uv sync --all-packages
@@ -90,3 +100,21 @@ dev-api:
 dev-api-live:
 	RAYWATCH_USE_LIVE=1 RAYWATCH_FIXTURE_JOBS= RAY_DASHBOARD_URL=http://127.0.0.1:8265 \
 		$(MAKE) dev-api
+
+dev:
+	bash scripts/dev-up.sh --detach
+
+dev-remote:
+	bash scripts/dev-remote.sh --detach
+
+dev-up:
+	bash scripts/dev-up.sh
+
+dev-down:
+	bash scripts/dev-down.sh
+
+dev-clean:
+	bash scripts/dev-clean.sh
+
+dev-fresh:
+	bash scripts/dev-fresh-local-state.sh

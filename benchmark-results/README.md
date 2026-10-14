@@ -6,6 +6,8 @@ Generated when you run:
 make benchmark
 RAYWATCH_BENCHMARK_WRITE=1 make benchmark
 make benchmark-ray   # RayWatch + Ray dashboard on a live head
+
+`feature-latency-registry.md` — per-feature API latency from `make perf` (NFR gate).
 ```
 
 Output file: **`jobs-list-latency.md`** (tracked in git; refreshed automatically).

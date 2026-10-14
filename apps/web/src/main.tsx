@@ -6,6 +6,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import App from "./App.tsx";
 import { ActorsPage } from "@/features/actors/actors-page";
 import { ClusterPage } from "@/features/cluster/cluster-page";
+import { NodeDetailPage } from "@/features/cluster/node-detail-page";
+import { OverviewPage } from "@/features/overview/overview-page";
 import { InternalRunsPage } from "@/features/jobs/internal-runs-page";
 import { JobDetailPage } from "@/features/jobs/job-detail-page";
 import { JobsPage } from "@/features/jobs/jobs-page";
@@ -21,8 +23,10 @@ createRoot(document.getElementById("root")!).render(
         <App>
           <Routes>
             <Route path="/" element={<JobsPage />} />
+            <Route path="/overview" element={<OverviewPage />} />
             <Route path="/actors" element={<ActorsPage />} />
             <Route path="/cluster" element={<ClusterPage />} />
+            <Route path="/cluster/nodes/:nodeId" element={<NodeDetailPage />} />
             <Route path="/internal-runs" element={<InternalRunsPage />} />
             <Route path="/jobs/:jobId" element={<JobDetailPage />} />
             <Route path="/tasks/:taskId" element={<TaskDetailPage />} />

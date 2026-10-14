@@ -7,12 +7,21 @@ test("fixture job shows breadcrumb trail", async ({ page }) => {
   await expect(trail).toContainText("train.py");
 });
 
+test("fixture job shows task gantt timeline", async ({ page }) => {
+  await page.goto("/jobs/01000000");
+  await expect(page.getByLabel("Task timeline")).toBeVisible();
+  await expect(page.locator(".task-gantt-bar")).toHaveCount(2);
+});
+
 test("fixture job logs panel shows content and toolbar works", async ({ page }) => {
   await page.goto("/jobs/01000000");
   await expect(page.getByRole("heading", { name: "Job logs" })).toBeVisible();
   await expect(page.locator(".log-viewer-lines")).toContainText("train.py");
   await expect(page.getByRole("button", { name: "1" }).first()).toBeVisible();
 
+  await expect(page.getByText("Tail paused")).toBeVisible();
+  await page.getByRole("button", { name: "Resume tail" }).click();
+  await expect(page.getByText("Tail paused")).toHaveCount(0);
   await page.getByRole("button", { name: "Pause tail" }).click();
   await expect(page.getByText("Tail paused")).toBeVisible();
 
@@ -24,7 +33,7 @@ test("fixture job logs panel shows content and toolbar works", async ({ page }) 
 test("fixture job shows task tree entries", async ({ page }) => {
   await page.goto("/jobs/01000000");
   await expect(page.getByRole("heading", { name: "Nested runs" })).toBeVisible();
-  await expect(page.getByText("train_step")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Expand train_step nested/i })).toBeVisible();
 });
 
 test("fixture stop job flow marks job stopped", async ({ page }) => {

@@ -30,7 +30,7 @@
   --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.35);
 
   --header-h: 3.25rem;
-  --container-max: 1280px;
+  --page-pad: 1.75rem;
 
   font-family: var(--font-sans);
   font-size: 14px;
@@ -107,10 +107,8 @@ a:hover {
 }
 
 .app-header-inner {
-  max-width: var(--container-max);
-  margin: 0 auto;
   height: 100%;
-  padding: 0 1.5rem;
+  padding: 0 var(--page-pad);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -189,12 +187,11 @@ a:hover {
 
 .app-body {
   flex: 1;
-  padding: 1.5rem;
+  padding: 1.25rem var(--page-pad) 2rem;
 }
 
 .page-container {
-  max-width: var(--container-max);
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* —— Page —— */
@@ -532,8 +529,12 @@ a:hover {
 .data-table-row {
   display: grid;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0 1.25rem;
+  gap: 1.25rem;
+  padding: 0 1.5rem;
+}
+
+.jobs-grid {
+  min-width: 92rem;
 }
 
 .data-table-col-filters {
@@ -585,6 +586,16 @@ a:hover {
 
 .cell-link {
   font-weight: 500;
+  min-width: 0;
+}
+
+.cell-job-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
 .cell-muted {
@@ -662,8 +673,33 @@ a:hover {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   font-family: var(--font-mono);
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.job-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(22rem, 32rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  margin-top: 1.5rem;
+}
+
+.job-detail-layout > .panel {
+  margin-top: 0;
+}
+
+.job-detail-logs .log-viewer {
+  max-height: calc(100vh - var(--header-h) - 14rem);
+  min-height: 22rem;
+}
+
+@media (max-width: 960px) {
+  .job-detail-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .job-actions,
@@ -677,6 +713,48 @@ a:hover {
 .entrypoint {
   margin: 0.5rem 0 0;
   color: var(--text-secondary);
+}
+
+.job-info-grid {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr 8.5rem 1fr;
+  gap: 0.45rem 1.25rem;
+  margin: 0.75rem 0 0;
+}
+
+.job-info-grid dt {
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.job-info-grid dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 800px) {
+  .job-info-grid {
+    grid-template-columns: 8.5rem 1fr;
+  }
+}
+
+.task-group-row {
+  background: var(--bg-elevated);
+}
+
+.task-profile-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-left: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.task-profile-disabled {
+  color: var(--text-tertiary);
+  cursor: not-allowed;
 }
 
 .meta-grid {
@@ -913,6 +991,12 @@ a:hover {
   font-size: 1.125rem;
 }
 
+.task-inspector-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 /* —— Command palette —— */
 .palette-backdrop {
   position: fixed;
@@ -985,6 +1069,64 @@ a:hover {
   outline: 1px solid var(--accent);
 }
 
+.pin-col {
+  width: 4.5rem;
+}
+
+.pin-toggle {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0;
+}
+
+.pin-toggle[aria-pressed="true"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.pinned-tasks {
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised, transparent);
+}
+
+.pinned-tasks-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+}
+
+.pinned-tasks-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pinned-tasks-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pinned-task-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
 .tree-toggle {
   border: none;
   background: transparent;
@@ -1000,6 +1142,85 @@ a:hover {
 
 .attempt-timeline {
   margin: 0.75rem 0;
+}
+
+.task-gantt {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+}
+
+.task-gantt-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  margin-bottom: 0.5rem;
+}
+
+.task-gantt-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.task-gantt-rows li {
+  display: grid;
+  grid-template-columns: minmax(6rem, 10rem) minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.task-gantt-row-focused .task-gantt-label {
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+
+.task-gantt-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-gantt-track {
+  position: relative;
+  height: 1.1rem;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.task-gantt-bar {
+  position: absolute;
+  top: 0.15rem;
+  bottom: 0.15rem;
+  border-radius: 3px;
+  min-width: 4px;
+  background: var(--accent);
+}
+
+.task-gantt-bar-running {
+  background: var(--success);
+}
+
+.task-gantt-bar-finished,
+.task-gantt-bar-succeeded {
+  background: var(--accent);
+}
+
+.task-gantt-bar-failed {
+  background: var(--danger);
+}
+
+.task-tree-scroll {
+  max-height: min(70vh, 32rem);
+  overflow: auto;
 }
 
 .timeline-steps {
@@ -1172,6 +1393,60 @@ a:hover {
 .table-card-loading {
   padding: 1.25rem;
   color: var(--text-secondary);
+}
+
+.jobs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.jobs-table th,
+.jobs-table td {
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.jobs-table th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.jobs-table td:nth-child(2) {
+  line-height: 1.45;
+}
+
+.jobs-table .truncate {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actor-table-scroll {
+  overflow-x: auto;
+}
+
+.actor-table {
+  min-width: 72rem;
+}
+
+.actor-filter-row th {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.actor-filter-row input,
+.actor-filter-row select {
+  width: 100%;
+  min-width: 0;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
 }
 
 .simple-table {

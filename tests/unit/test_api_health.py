@@ -1,7 +1,21 @@
 """API contract smoke tests."""
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
+from raywatch.api.main import app
+from raywatch.api.state import live_cache
+
+
+@pytest.mark.asyncio
+async def test_health_ok_before_first_sync() -> None:
+    live_cache.reset()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/health")
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
+        ready = await client.get("/ready")
+        assert ready.json()["ready"] is False
 
 
 @pytest.mark.asyncio

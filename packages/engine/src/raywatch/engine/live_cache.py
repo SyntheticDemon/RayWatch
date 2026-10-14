@@ -362,9 +362,15 @@ class LiveCache:
     def cluster_overview(self) -> ClusterOverview:
         nodes = list(self._state.nodes.values())
         alive = [n for n in nodes if (n.state or "").upper() == "ALIVE"]
-        cpu = sum(n.cpu_total or 0.0 for n in nodes)
-        gpu = sum(n.gpu_total or 0.0 for n in nodes)
-        memory = sum(n.memory_bytes_total or 0.0 for n in nodes)
+        capacity_nodes = alive if alive else nodes
+        util = self._state.utilization
+        if util is not None and util.memory_bytes_total > 0:
+            cpu = util.cpu_total
+            memory = util.memory_bytes_total
+        else:
+            cpu = sum(n.cpu_total or 0.0 for n in capacity_nodes)
+            memory = sum(n.memory_bytes_total or 0.0 for n in capacity_nodes)
+        gpu = sum(n.gpu_total or 0.0 for n in capacity_nodes)
         return ClusterOverview(
             nodes_total=len(nodes),
             nodes_alive=len(alive),

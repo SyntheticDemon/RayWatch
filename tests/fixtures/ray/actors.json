@@ -8,7 +8,11 @@
           "state": "ALIVE",
           "job_id": "01000000",
           "worker_id": "worker-1",
-          "node_id": "node-abc"
+          "node_id": "node-abc",
+          "pid": 4242,
+          "name": "counter-a",
+          "ray_namespace": "serve",
+          "num_restarts": 0
         }
       ]
     }

@@ -2,8 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { TaskAttemptTimeline } from "@/features/jobs/task-attempt-timeline";
+import { usePinnedTasks } from "@/features/jobs/use-pinned-tasks";
 import { fetchJobTasks, type TaskSummary } from "@/shared/api/client";
 import { ActorCard } from "@/shared/ui/actor-card";
+import { TaskProfileLinks } from "@/features/jobs/task-profile-links";
+import { Button } from "@/shared/ui/primitives";
 import { WorkerCard } from "@/shared/ui/worker-card";
 
 type TaskInspectorProps = {
@@ -12,6 +15,12 @@ type TaskInspectorProps = {
 };
 
 export function TaskInspector({ task, showJobLink }: TaskInspectorProps) {
+  const { isPinned, togglePin } = usePinnedTasks(task.job_id);
+  const pinned = isPinned(task.task_id);
+  const jobTasksQuery = useQuery({
+    queryKey: ["job-tasks", task.job_id, "timeline"],
+    queryFn: () => fetchJobTasks(task.job_id),
+  });
   const childrenQuery = useQuery({
     queryKey: ["job-tasks", task.job_id, "children", task.task_id],
     queryFn: () => fetchJobTasks(task.job_id),
@@ -22,13 +31,24 @@ export function TaskInspector({ task, showJobLink }: TaskInspectorProps) {
     <div className="task-inspector">
       <header className="task-inspector-header">
         <h2 className="task-inspector-title">{task.name || task.func_or_class || "Task"}</h2>
-        {showJobLink && (
-          <Link to={`/jobs/${task.job_id}?task=${task.task_id}`} className="text-link small">
-            View in job context
-          </Link>
-        )}
+        <div className="task-inspector-actions">
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-pressed={pinned}
+            onClick={() => togglePin(task.task_id)}
+          >
+            {pinned ? "Unpin task" : "Pin task"}
+          </Button>
+          <TaskProfileLinks task={task} />
+          {showJobLink && (
+            <Link to={`/jobs/${task.job_id}?task=${task.task_id}`} className="text-link small">
+              View in job context
+            </Link>
+          )}
+        </div>
       </header>
-      <TaskAttemptTimeline task={task} />
+      <TaskAttemptTimeline task={task} jobTasks={jobTasksQuery.data?.items} />
       <div className="entity-card-row">
         <WorkerCard workerId={task.worker_id} activeTaskId={task.task_id} />
         <ActorCard actorId={task.actor_id} />

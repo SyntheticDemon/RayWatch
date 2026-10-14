@@ -1,9 +1,14 @@
+import httpx
 from fastapi import APIRouter, HTTPException, Query
+from raywatch.adapter_ray.actor_logs import fetch_logs_for_actor
+from raywatch.adapter_ray.ray_client import request_kill_actor
 from raywatch.api.state import live_cache
 from raywatch.model.api_cluster_dto import (
+    ActorLogsResponse,
     ActorResponse,
     ActorsPage,
     ClusterOverviewResponse,
+    KillActorResponse,
     NodeResponse,
     NodesPage,
     ObjectResponse,
@@ -59,6 +64,53 @@ def get_actor(actor_id: str) -> ActorResponse:
     if actor is None:
         raise _ACTOR_NOT_FOUND
     return ActorResponse(actor=actor, sync=live_cache.sync_meta())
+
+
+@router.get("/actors/{actor_id}/logs", response_model=ActorLogsResponse)
+async def actor_logs(actor_id: str) -> ActorLogsResponse:
+    actor = live_cache.get_actor(actor_id)
+    if actor is None:
+        raise _ACTOR_NOT_FOUND
+    sync = live_cache.sync_meta()
+    try:
+        text = await fetch_logs_for_actor(actor, cluster_epoch=sync.cluster_epoch)
+        return ActorLogsResponse(actor_id=actor_id, logs=text, sync=sync)
+    except Exception as exc:
+        return ActorLogsResponse(
+            actor_id=actor_id,
+            logs="",
+            error_message=str(exc),
+            sync=sync,
+        )
+
+
+@router.post("/actors/{actor_id}/kill", response_model=KillActorResponse)
+async def kill_actor(actor_id: str) -> KillActorResponse:
+    actor = live_cache.get_actor(actor_id)
+    if actor is None:
+        raise _ACTOR_NOT_FOUND
+    sync = live_cache.sync_meta()
+    if sync.cluster_epoch == "fixture":
+        return KillActorResponse(
+            actor_id=actor_id,
+            accepted=True,
+            message="Kill accepted (fixture dev — no Ray call).",
+            sync=sync,
+        )
+    try:
+        async with httpx.AsyncClient() as client:
+            await request_kill_actor(client, actor_id)
+        message = "Kill request sent to Ray"
+        accepted = True
+    except Exception as exc:
+        message = str(exc)
+        accepted = False
+    return KillActorResponse(
+        actor_id=actor_id,
+        accepted=accepted,
+        message=message,
+        sync=live_cache.sync_meta(),
+    )
 
 
 @router.get("/objects", response_model=ObjectsPage)

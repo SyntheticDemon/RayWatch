@@ -47,3 +47,17 @@ class ObjectResponse(BaseModel):
 class UtilizationHistoryResponse(BaseModel):
     items: list[UtilizationSample]
     sync: SyncMeta
+
+
+class KillActorResponse(BaseModel):
+    actor_id: str
+    accepted: bool
+    message: str
+    sync: SyncMeta
+
+
+class ActorLogsResponse(BaseModel):
+    actor_id: str
+    logs: str
+    error_message: str | None = None
+    sync: SyncMeta

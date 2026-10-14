@@ -9,6 +9,7 @@ FIXTURE_JOBS = Path(__file__).resolve().parents[1] / "fixtures" / "ray" / "jobs_
 FIXTURE_NODES = Path(__file__).resolve().parents[1] / "fixtures" / "ray" / "nodes.json"
 FIXTURE_ACTORS = Path(__file__).resolve().parents[1] / "fixtures" / "ray" / "actors.json"
 FIXTURE_OBJECTS = Path(__file__).resolve().parents[1] / "fixtures" / "ray" / "objects.json"
+FIXTURE_CLUSTER_STATUS = Path(__file__).resolve().parents[1] / "fixtures" / "ray" / "cluster_status.json"
 
 
 @pytest.mark.asyncio
@@ -19,12 +20,13 @@ async def test_cluster_nodes_and_actors_from_fixtures(
     monkeypatch.setenv("RAYWATCH_FIXTURE_NODES", str(FIXTURE_NODES))
     monkeypatch.setenv("RAYWATCH_FIXTURE_ACTORS", str(FIXTURE_ACTORS))
     monkeypatch.setenv("RAYWATCH_FIXTURE_OBJECTS", str(FIXTURE_OBJECTS))
+    monkeypatch.setenv("RAYWATCH_FIXTURE_CLUSTER_STATUS", str(FIXTURE_CLUSTER_STATUS))
     await sync_active_jobs(live_cache)
 
     nodes = await api_client.get("/cluster/nodes")
     assert nodes.status_code == 200
     body = nodes.json()
-    assert len(body["items"]) == 1
+    assert len(body["items"]) == 2
     assert body["items"][0]["node_id"] == "node-abc"
 
     actors = await api_client.get("/cluster/actors")
@@ -38,10 +40,17 @@ async def test_cluster_nodes_and_actors_from_fixtures(
     overview = await api_client.get("/cluster/overview")
     assert overview.status_code == 200
     body = overview.json()["overview"]
-    assert body["nodes_total"] == 1
+    assert body["nodes_total"] == 2
+    assert body["nodes_alive"] == 1
     assert body["actors_total"] == 1
     assert body["objects_total"] == 1
     assert body["job_count"] >= 1
+    assert body["utilization"] is not None
+    assert body["memory_bytes_total"] < 100 * 1024**3
+
+    kill = await api_client.post("/cluster/actors/actor-demo-1/kill")
+    assert kill.status_code == 200
+    assert kill.json()["accepted"] is True
 
     objects = await api_client.get("/cluster/objects")
     assert objects.status_code == 200

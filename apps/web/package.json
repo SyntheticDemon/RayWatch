@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "RAYWATCH_E2E_LIVE=1 playwright test",
+    "test:e2e:fixture": "RAYWATCH_E2E_LIVE=0 playwright test"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.2",

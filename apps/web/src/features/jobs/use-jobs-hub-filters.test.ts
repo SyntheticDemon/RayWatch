@@ -3,8 +3,54 @@ import { describe, expect, it } from "vitest";
 import {
   apiStartedAfter,
   apiStartedBefore,
+  applyJobColumnFilters,
   isSubmissionJob,
+  type ColumnFilters,
 } from "@/features/jobs/use-jobs-hub-filters";
+
+const emptyFilters: ColumnFilters = {
+  jobId: "",
+  submissionId: "",
+  status: "",
+  jobType: "",
+  entrypoint: "",
+  message: "",
+  driverPid: "",
+};
+
+describe("applyJobColumnFilters", () => {
+  const rows = [
+    {
+      job_id: "01000000",
+      status: "RUNNING",
+      entrypoint: "python train.py",
+      submission_id: "01000000",
+      job_type: "SUBMISSION",
+      error_message: null,
+      driver_pid: 11,
+    },
+    {
+      job_id: "02000000",
+      status: "SUCCEEDED",
+      entrypoint: "python eval.py",
+      submission_id: "02000000",
+      job_type: "SUBMISSION",
+      error_message: "boom",
+      driver_pid: 22,
+    },
+  ];
+
+  it("keeps the page rows that match submission, type, message, and pid", () => {
+    expect(applyJobColumnFilters(rows, { ...emptyFilters, entrypoint: "eval" }).map((row) => row.job_id)).toEqual([
+      "02000000",
+    ]);
+    expect(applyJobColumnFilters(rows, { ...emptyFilters, message: "boom" })).toHaveLength(1);
+    expect(applyJobColumnFilters(rows, { ...emptyFilters, driverPid: "11" }).map((row) => row.job_id)).toEqual([
+      "01000000",
+    ]);
+    expect(applyJobColumnFilters(rows, { ...emptyFilters, jobType: "driver" })).toHaveLength(0);
+  });
+});
 
 describe("isSubmissionJob", () => {
   it("classifies Ray submission and fixture ids", () => {

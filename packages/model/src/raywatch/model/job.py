@@ -23,8 +23,10 @@ class JobSummary(BaseModel):
     task_failed: int = 0
     task_total: int = 0
     archived: bool = False
+    driver_pid: int | None = None
+    submission_id: str | None = None
+    job_type: str | None = None
 
 
 class JobDetail(JobSummary):
-    driver_pid: int | None = None
     metadata: dict[str, str] = Field(default_factory=dict)

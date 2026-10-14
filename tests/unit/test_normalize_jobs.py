@@ -15,3 +15,4 @@ def test_normalize_jobs_fixture_produces_three_jobs() -> None:
     assert first.job_id == "01000000"
     assert first.status.value == "RUNNING"
     assert first.task_running == 4
+    assert first.submission_id == "01000000"

@@ -1,3 +1,4 @@
+import { TaskGanttTimeline } from "@/features/jobs/task-gantt-timeline";
 import type { TaskSummary } from "@/shared/api/client";
 
 const STEPS = ["PENDING", "RUNNING", "FINISHED", "FAILED"] as const;
@@ -10,12 +11,20 @@ function stepIndex(status: string): number {
   return 0;
 }
 
-export function TaskAttemptTimeline({ task }: { task: TaskSummary }) {
+type TaskAttemptTimelineProps = {
+  task: TaskSummary;
+  /** Sibling tasks on the same job — used for Dagster-style bars. */
+  jobTasks?: TaskSummary[];
+};
+
+export function TaskAttemptTimeline({ task, jobTasks }: TaskAttemptTimelineProps) {
   const active = stepIndex(task.status);
   const attempts = Math.max(1, task.attempt_count);
+  const ganttTasks = jobTasks?.length ? jobTasks : [task];
 
   return (
     <div className="attempt-timeline" aria-label="Task state timeline">
+      <TaskGanttTimeline tasks={ganttTasks} focusTaskId={task.task_id} />
       <p className="muted small">
         Attempts: {attempts}
         {task.started_at ? ` · started ${new Date(task.started_at).toLocaleString()}` : ""}

@@ -41,6 +41,26 @@ jobs:
       - run: npm run build
       - run: npm run test
       - run: npx playwright install chromium --with-deps
-      - run: npm run test:e2e
+      - run: npm run test:e2e:fixture
+        env:
+          CI: "1"
+
+  e2e-live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-packages
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: cd apps/web && npm ci
+      - run: npx playwright install chromium --with-deps
+        working-directory: apps/web
+      - run: make test-e2e
         env:
           CI: "1"

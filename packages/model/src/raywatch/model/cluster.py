@@ -49,10 +49,16 @@ class ClusterOverview(BaseModel):
 class ActorSummary(BaseModel):
     actor_id: str
     class_name: str | None = None
+    name: str | None = None
+    repr_name: str | None = None
     state: str | None = None
     job_id: str | None = None
     worker_id: str | None = None
     node_id: str | None = None
+    pid: int | None = None
+    ray_namespace: str | None = None
+    num_restarts: int = 0
+    placement_group_id: str | None = None
 
 
 class ObjectSummary(BaseModel):
