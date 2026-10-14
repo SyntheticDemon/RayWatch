@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 from httpx import AsyncClient
-
 from raywatch.api.state import live_cache
 from raywatch.collector.sync_loop import sync_active_jobs
 
@@ -56,9 +55,7 @@ async def test_list_job_tasks_pagination(
     body = page.json()
     assert len(body["items"]) == 1
     if body["next_cursor"]:
-        page2 = await api_client.get(
-            f"/jobs/01000000/tasks?limit=1&cursor={body['next_cursor']}"
-        )
+        page2 = await api_client.get(f"/jobs/01000000/tasks?limit=1&cursor={body['next_cursor']}")
         assert page2.status_code == 200
 
 

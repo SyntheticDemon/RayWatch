@@ -4,6 +4,7 @@ import bisect
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
+from raywatch.model.cluster import ActorSummary, NodeSummary
 from raywatch.model.freshness import SyncMeta
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus, JobSummary
@@ -24,6 +25,8 @@ class LiveCacheState:
     ray_out_of_sync: bool = False
     cluster_epoch: str = "default"
     ray_reachable: bool = True
+    nodes: dict[str, NodeSummary] = field(default_factory=dict)
+    actors: dict[str, ActorSummary] = field(default_factory=dict)
 
 
 class LiveCache:
@@ -255,3 +258,21 @@ class LiveCache:
 
     def task_count(self) -> int:
         return len(self._state.tasks)
+
+    def set_cluster_snapshot(self, nodes: list[NodeSummary], actors: list[ActorSummary]) -> None:
+        self._state.nodes = {n.node_id: n for n in nodes}
+        self._state.actors = {a.actor_id: a for a in actors}
+
+    def list_nodes(self) -> list[NodeSummary]:
+        return sorted(self._state.nodes.values(), key=lambda n: n.node_id)
+
+    def list_actors(self, limit: int = 200) -> list[ActorSummary]:
+        limit = min(max(limit, 1), 500)
+        actors = sorted(self._state.actors.values(), key=lambda a: a.actor_id)
+        return actors[:limit]
+
+    def get_node(self, node_id: str) -> NodeSummary | None:
+        return self._state.nodes.get(node_id)
+
+    def get_actor(self, actor_id: str) -> ActorSummary | None:
+        return self._state.actors.get(actor_id)

@@ -99,7 +99,8 @@ def check_scenario(
         if gate > cap:
             raise AssertionError(
                 f"{name}: gate_p95={gate:.2f}ms (cold={report.cold_ms:.2f}ms) exceeds allowed "
-                f"{cap:.2f}ms (baseline {baseline_p95:.2f}ms + {regression_allowance_pct():.0f}% slack)"
+                f"{cap:.2f}ms (baseline {baseline_p95:.2f}ms + "
+                f"{regression_allowance_pct():.0f}% slack)"
             )
         if baseline_cold_ms is not None:
             cold_cap = allowed_p95(baseline_cold_ms)

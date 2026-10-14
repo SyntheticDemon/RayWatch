@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
@@ -28,10 +29,8 @@ class LiveHub:
 
     def publish(self, channel: str, message: dict[str, Any]) -> None:
         for queue in list(self._channels.get(channel, ())):
-            try:
+            with contextlib.suppress(asyncio.QueueFull):
                 queue.put_nowait(message)
-            except asyncio.QueueFull:
-                pass
         if channel != "*":
             self.publish("*", message)
 

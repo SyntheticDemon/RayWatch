@@ -29,7 +29,8 @@ async def test_jobs_list_latency_raywatch_vs_ray_dashboard_table() -> None:
     banner = (
         "\n\n### Jobs list latency benchmark (cold + warm p95 ms)\n\n"
         f"Warm p95 uses BENCHMARK_WARMUP discarded iterations. "
-        f"Ray dashboard column: {'included (live cluster)' if compare_ray else 'skipped (no Ray head)'}\n\n"
+        f"Ray dashboard column: "
+        f"{'included (live cluster)' if compare_ray else 'skipped (no Ray head)'}\n\n"
     )
     print(banner + table + "\n")
     path = maybe_write_benchmark_table(table, ray_included=compare_ray)

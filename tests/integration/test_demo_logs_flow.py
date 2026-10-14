@@ -2,10 +2,8 @@
 
 import os
 
-import httpx
 import pytest
 from httpx import ASGITransport, AsyncClient
-
 from raywatch.api.main import app
 
 pytestmark = pytest.mark.integration

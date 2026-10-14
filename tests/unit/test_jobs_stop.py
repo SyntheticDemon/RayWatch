@@ -12,7 +12,9 @@ async def test_stop_unknown_job_returns_404(api_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_stop_job_attempts_ray_call(api_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_stop_job_attempts_ray_call(
+    api_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     calls: list[str] = []
 
     async def fake_stop(_client: object, job_id: str) -> None:

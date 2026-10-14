@@ -26,7 +26,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Job list (status, id, entrypoint, timing) | `GET /jobs` + jobs table | **done** | Cursor pagination, filters |
+| Job list (status, id, entrypoint, timing) | `GET /jobs` + jobs table | **done** | Cursor pagination, filters, `include_archived` |
 | Job detail / status | `GET /jobs/{id}` | **done** | Sync honesty fields |
 | Stop / terminate job | `POST /jobs/{id}/stop` | **done** | Best-effort Ray HTTP |
 | Submit job from UI | — | **n/a** | Ops view; use Ray CLI/SDK |
@@ -38,8 +38,8 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
 | Task detail | `GET /tasks/{id}` + task drawer/page | **partial** | Attempt timeline UI |
-| Worker / node drill-down | Worker card component | **partial** | Expand-one-hop |
-| Actors, objects, global state browser | Search routes only | **gap** | Palette + `/search`; not full cluster browser |
+| Worker / node drill-down | Worker card + `GET /cluster/nodes` | **partial** | Expand-one-hop |
+| Actors, objects, global state browser | `GET /cluster/actors` + search | **partial** | No full object browser |
 | Metrics / charts / GPU views | — | **gap** | Out of v1; not blocking jobs hub |
 
 ### Live & freshness

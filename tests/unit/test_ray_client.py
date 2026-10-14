@@ -2,7 +2,11 @@
 
 import httpx
 import pytest
-from raywatch.adapter_ray.ray_client import fetch_jobs_json, ray_dashboard_base_url, request_stop_job
+from raywatch.adapter_ray.ray_client import (
+    fetch_jobs_json,
+    ray_dashboard_base_url,
+    request_stop_job,
+)
 
 
 @pytest.mark.asyncio

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Query
-
 from raywatch.api.state import live_cache
 from raywatch.engine.sync_side_effects import job_snapshot_store
 from raywatch.model.api_dto import SearchHit, SearchResponse
@@ -8,7 +7,9 @@ router = APIRouter(tags=["search"])
 
 
 @router.get("/search", response_model=SearchResponse)
-def search_entities(q: str = Query(min_length=1, max_length=200), limit: int = Query(20, ge=1, le=50)) -> SearchResponse:
+def search_entities(
+    q: str = Query(min_length=1, max_length=200), limit: int = Query(20, ge=1, le=50)
+) -> SearchResponse:
     raw = live_cache.search_entities(q, limit=limit)
     seen = {hit["id"] for hit in raw}
     items = [SearchHit(**hit) for hit in raw]

@@ -15,17 +15,24 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    proxy: {
-      "/api": {
-        target: apiTarget,
-        changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/api/, ""),
-      },
-      "/ws": {
-        target: apiTarget,
-        changeOrigin: true,
-        ws: true,
-      },
-    },
+    proxy: apiProxy(),
+  },
+  preview: {
+    proxy: apiProxy(),
   },
 });
+
+function apiProxy() {
+  return {
+    "/api": {
+      target: apiTarget,
+      changeOrigin: true,
+      rewrite: (p: string) => p.replace(/^\/api/, ""),
+    },
+    "/ws": {
+      target: apiTarget,
+      changeOrigin: true,
+      ws: true,
+    },
+  };
+}

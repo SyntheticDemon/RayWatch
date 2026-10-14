@@ -4,7 +4,6 @@ import os
 
 import httpx
 import pytest
-
 from raywatch.adapter_ray.normalize_jobs import normalize_jobs_payload
 from raywatch.adapter_ray.ray_client import fetch_jobs_json, ray_dashboard_base_url
 

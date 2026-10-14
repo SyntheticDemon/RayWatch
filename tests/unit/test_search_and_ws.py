@@ -2,12 +2,11 @@ from pathlib import Path
 
 import pytest
 from httpx import AsyncClient
-from starlette.testclient import TestClient
-
 from raywatch.api.main import app
 from raywatch.api.state import live_cache
 from raywatch.collector.sync_loop import sync_active_jobs
 from raywatch.engine.live_hub import live_hub
+from starlette.testclient import TestClient
 
 FIXTURE_JOBS = Path(__file__).resolve().parents[1] / "fixtures" / "ray" / "jobs_list.json"
 
@@ -25,12 +24,11 @@ async def test_search_returns_job_hit(api_client: AsyncClient) -> None:
 def test_websocket_receives_sync_event(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("RAYWATCH_FIXTURE_JOBS", str(FIXTURE_JOBS))
     live_cache.reset()
-    with TestClient(app) as client:
-        with client.websocket_connect("/ws/live") as ws:
-            import asyncio
+    with TestClient(app) as client, client.websocket_connect("/ws/live") as ws:
+        import asyncio
 
-            asyncio.run(sync_active_jobs(live_cache))
-            message = ws.receive_json()
+        asyncio.run(sync_active_jobs(live_cache))
+        message = ws.receive_json()
     assert message["type"] == "sync"
     assert "job_count" in message
 

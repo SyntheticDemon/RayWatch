@@ -1,8 +1,7 @@
 """Guard against perf tests that hide cold latency or reuse warmed HTTP clients."""
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-from raywatch.api.main import app
+from httpx import ASGITransport
 from raywatch.api.state import live_cache
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus

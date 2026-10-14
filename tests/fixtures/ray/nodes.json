@@ -1,0 +1,14 @@
+{
+  "data": {
+    "result": {
+      "result": [
+        {
+          "node_id": "node-abc",
+          "node_name": "ray-head",
+          "state": "ALIVE",
+          "is_head_node": true
+        }
+      ]
+    }
+  }
+}

@@ -1,10 +1,8 @@
 import pytest
 from httpx import AsyncClient
-
 from raywatch.api.state import live_cache
 from raywatch.model.ingest import IngestBatch, IngestOp
 from raywatch.model.job import JobDetail, JobStatus
-from raywatch.model.task import TaskStatus, TaskSummary
 
 
 @pytest.mark.asyncio
@@ -16,7 +14,9 @@ async def test_list_jobs_status_filter(api_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_task_and_job_tasks(api_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_get_task_and_job_tasks(
+    api_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from pathlib import Path
 
     from raywatch.collector.sync_loop import sync_active_jobs
@@ -36,7 +36,9 @@ async def test_get_task_and_job_tasks(api_client: AsyncClient, monkeypatch: pyte
 
 
 @pytest.mark.asyncio
-async def test_job_logs_endpoint_mocked(api_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_job_logs_endpoint_mocked(
+    api_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     async def fake_logs(_client: object, _job_id: str) -> str:
         return "line1\nline2"
 

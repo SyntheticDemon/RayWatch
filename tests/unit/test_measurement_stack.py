@@ -1,16 +1,15 @@
 """Unit tests for latency stats, perf harness, and benchmark helpers."""
 
 import json
-import os
 from pathlib import Path
 
 import pytest
 
 from support.dashboard_benchmark import (
+    ScaleLatencyRow,
     collect_scale_rows,
     format_latency_table,
     parse_scale_list,
-    ScaleLatencyRow,
 )
 from support.latency_stats import LatencySample, measure_async, percentile_ms
 from support.perf_harness import (
@@ -69,7 +68,9 @@ def test_check_scenario_cold_gate() -> None:
         check_scenario("x", 100, report, baseline_p95=10.0, baseline_cold_ms=1.0)
 
 
-def test_format_results_and_benchmark_table(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_format_results_and_benchmark_table(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     report = HonestLatencyReport(
         cold_ms=2.0,
         steady=LatencySample(p50_ms=1.5, p95_ms=2.5, mean_ms=1.6, n=10),
@@ -127,7 +128,9 @@ async def test_measure_fresh_client_honest_report() -> None:
     assert report.gate_p95_ms == report.steady.p95_ms
 
 
-def test_maybe_update_baselines_writes_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_maybe_update_baselines_writes_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     baseline_file = tmp_path / "baselines.json"
     baseline_file.write_text(
         json.dumps(
@@ -161,7 +164,11 @@ def test_load_baselines_real_file() -> None:
 
 
 def test_benchmark_results_merges_sections(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from support.benchmark_results import REPORT_PATH, SECTION_PERF, SECTION_RAY_COMPARE, write_jobs_list_latency_report
+    from support.benchmark_results import (
+        SECTION_PERF,
+        SECTION_RAY_COMPARE,
+        write_jobs_list_latency_report,
+    )
 
     report = tmp_path / "jobs-list-latency.md"
     monkeypatch.setattr("support.benchmark_results.REPORT_PATH", report)

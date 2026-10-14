@@ -49,6 +49,26 @@ async def fetch_jobs_json(client: httpx.AsyncClient) -> dict[str, Any]:
     return body
 
 
+async def fetch_nodes_json(client: httpx.AsyncClient) -> dict[str, Any]:
+    url = f"{ray_dashboard_base_url()}/api/v0/nodes"
+    response = await client.get(url, timeout=30.0)
+    response.raise_for_status()
+    body = response.json()
+    if not isinstance(body, dict):
+        raise ValueError("Ray nodes response must be a JSON object")
+    return body
+
+
+async def fetch_actors_json(client: httpx.AsyncClient) -> dict[str, Any]:
+    url = f"{ray_dashboard_base_url()}/api/v0/actors"
+    response = await client.get(url, timeout=60.0)
+    response.raise_for_status()
+    body = response.json()
+    if not isinstance(body, dict):
+        raise ValueError("Ray actors response must be a JSON object")
+    return body
+
+
 async def request_stop_job(client: httpx.AsyncClient, job_id: str) -> None:
     url = f"{ray_dashboard_base_url()}/api/jobs/{job_id}/stop"
     response = await client.post(url, timeout=30.0)

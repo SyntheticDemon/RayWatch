@@ -18,6 +18,7 @@ export type JobSummary = {
   task_failed: number;
   task_total: number;
   error_message: string | null;
+  archived?: boolean;
 };
 
 export type JobDetail = JobSummary & {
@@ -98,6 +99,7 @@ export type JobsQuery = {
   failed_within_hours?: number;
   started_after?: string;
   started_before?: string;
+  include_archived?: boolean;
 };
 
 export type SyncTriggerResponse = {
@@ -116,7 +118,7 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function qs(params: Record<string, string | number | undefined>): string {
+function qs(params: Record<string, string | number | boolean | undefined>): string {
   const parts = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== "")
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);

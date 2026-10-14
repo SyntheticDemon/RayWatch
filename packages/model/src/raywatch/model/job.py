@@ -22,6 +22,7 @@ class JobSummary(BaseModel):
     task_running: int = 0
     task_failed: int = 0
     task_total: int = 0
+    archived: bool = False
 
 
 class JobDetail(JobSummary):

@@ -4,8 +4,15 @@ import httpx
 from fastapi import APIRouter, HTTPException, Query
 from raywatch.adapter_ray.ray_client import fetch_job_logs_text, request_stop_job
 from raywatch.api.state import live_cache
-from raywatch.engine.sync_side_effects import resolve_job
-from raywatch.model.api_dto import JobLogsResponse, JobResponse, JobsPage, StopJobResponse, TasksPage
+from raywatch.engine.job_list import list_jobs as list_jobs_merged
+from raywatch.engine.sync_side_effects import job_snapshot_store, resolve_job
+from raywatch.model.api_dto import (
+    JobLogsResponse,
+    JobResponse,
+    JobsPage,
+    StopJobResponse,
+    TasksPage,
+)
 from raywatch.model.job import JobStatus
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -26,17 +33,33 @@ def list_jobs(
     started_after: datetime | None = None,
     started_before: datetime | None = None,
     failed_within_hours: float | None = Query(default=None, ge=0.1, le=720),
+    include_archived: bool = False,
 ) -> JobsPage:
-    items, next_cursor = live_cache.list_jobs(
-        cursor=cursor,
-        limit=limit,
-        status=status,
-        q=q,
-        sort=sort,
-        started_after=started_after,
-        started_before=started_before,
-        failed_within_hours=failed_within_hours,
-    )
+    if include_archived:
+        items, next_cursor = list_jobs_merged(
+            live_cache,
+            job_snapshot_store(),
+            cursor=cursor,
+            limit=limit,
+            include_archived=True,
+            status=status,
+            q=q,
+            sort=sort,
+            started_after=started_after,
+            started_before=started_before,
+            failed_within_hours=failed_within_hours,
+        )
+    else:
+        items, next_cursor = live_cache.list_jobs(
+            cursor=cursor,
+            limit=limit,
+            status=status,
+            q=q,
+            sort=sort,
+            started_after=started_after,
+            started_before=started_before,
+            failed_within_hours=failed_within_hours,
+        )
     return JobsPage(items=items, next_cursor=next_cursor, sync=live_cache.sync_meta())
 
 

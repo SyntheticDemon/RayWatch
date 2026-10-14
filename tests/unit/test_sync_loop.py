@@ -1,8 +1,6 @@
 """Collector sync loop: fixture ingest and Ray failure handling."""
 
-import json
 from pathlib import Path
-
 from unittest.mock import AsyncMock
 
 import httpx

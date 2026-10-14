@@ -17,11 +17,22 @@ export function JobsPage() {
   const [sort, setSort] = useState<"job_id" | "started_at" | "status">("job_id");
   const [startedAfter, setStartedAfter] = useState("");
   const [startedBefore, setStartedBefore] = useState("");
+  const [includeArchived, setIncludeArchived] = useState(false);
   const queryClient = useQueryClient();
   const { connected } = useLiveSync();
 
   const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: ["jobs", status, q, sort, failed24h, startedAfter, startedBefore, cursor ?? ""],
+    queryKey: [
+      "jobs",
+      status,
+      q,
+      sort,
+      failed24h,
+      startedAfter,
+      startedBefore,
+      includeArchived,
+      cursor ?? "",
+    ],
     queryFn: () =>
       fetchJobs({
         status: failed24h ? "FAILED" : status || undefined,
@@ -29,6 +40,7 @@ export function JobsPage() {
         sort,
         cursor,
         limit: 50,
+        include_archived: includeArchived || undefined,
         failed_within_hours: failed24h ? 24 : undefined,
         started_after: startedAfter ? new Date(startedAfter).toISOString() : undefined,
         started_before: startedBefore ? new Date(startedBefore).toISOString() : undefined,
@@ -150,6 +162,18 @@ export function JobsPage() {
             Failed (24h)
           </button>
         </div>
+        <label className="sort-label">
+          <input
+            type="checkbox"
+            checked={includeArchived}
+            onChange={(e) => {
+              setIncludeArchived(e.target.checked);
+              setCursor(undefined);
+              setRows([]);
+            }}
+          />
+          Include archived
+        </label>
       </div>
       <VirtualizedJobsTable rows={rows} />
       {data?.next_cursor && (

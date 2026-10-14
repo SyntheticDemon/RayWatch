@@ -8,10 +8,10 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from raywatch.api.routes import jobs, meta, search, tasks, ws
-from raywatch.engine.sync_side_effects import job_snapshot_store
+from raywatch.api.routes import cluster, jobs, meta, search, tasks, ws
 from raywatch.api.state import live_cache
 from raywatch.collector.sync_loop import run_sync_loop, sync_active_jobs
+from raywatch.engine.sync_side_effects import job_snapshot_store
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,7 @@ app.add_middleware(
 
 app.include_router(meta.router)
 app.include_router(search.router)
+app.include_router(cluster.router)
 app.include_router(jobs.router)
 app.include_router(tasks.router)
 app.include_router(ws.router)

@@ -1,7 +1,6 @@
 """Live sync path with mocked Ray HTTP (jobs + tasks)."""
 
 import pytest
-
 from raywatch.api.state import live_cache
 from raywatch.collector.sync_loop import sync_active_jobs
 
