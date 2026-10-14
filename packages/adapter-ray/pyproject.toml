@@ -2,7 +2,7 @@
 name = "raywatch-adapter-ray"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["raywatch-model", "httpx>=0.28"]
+dependencies = ["raywatch-model", "httpx>=0.28", "websockets>=14.0"]
 
 [tool.uv.sources]
 raywatch-model = { workspace = true }

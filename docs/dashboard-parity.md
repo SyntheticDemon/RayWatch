@@ -30,7 +30,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Job detail / status | `GET /jobs/{id}` | **done** | Sync honesty fields |
 | Stop / terminate job | `POST /jobs/{id}/stop` | **done** | Best-effort Ray HTTP |
 | Submit job from UI | — | **n/a** | Ops view; use Ray CLI/SDK |
-| Driver logs (job) | `GET /jobs/{id}/logs` + LogViewer | **close** | UI tails ~400 lines then `after_offset` poll; short server log-body cache on poll; WS-triggered tail; filters; `?log_line=` links |
+| Driver logs (job) | `GET /jobs/{id}/logs` + `WS /ws/job-logs` + LogViewer | **close** | HTTP tail + cache; live clusters proxy Ray `/logs/tail` WS; fixture mode HTTP poll; filters; `?log_line=` links |
 | Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **close** | **Nested runs** on job detail; `/internal-runs` hub; cursor + “Load more”; WS `tasks_preview` |
 
 ### Tasks & entities

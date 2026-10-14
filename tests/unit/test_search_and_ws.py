@@ -49,6 +49,14 @@ def test_websocket_job_scope_includes_tasks_preview(monkeypatch: pytest.MonkeyPa
     assert len(message["tasks_preview"]) >= 1
 
 
+def test_websocket_job_logs_fixture(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RAYWATCH_FIXTURE_JOBS", str(FIXTURE_JOBS))
+    live_cache.reset()
+    with TestClient(app) as client, client.websocket_connect("/ws/job-logs?job_id=01000000") as ws:
+        text = ws.receive_text()
+    assert "train" in text.lower() or len(text) > 0
+
+
 def test_live_hub_publish_subscribe() -> None:
     queue = live_hub.subscribe("*")
     live_hub.publish("*", {"type": "ping"})
