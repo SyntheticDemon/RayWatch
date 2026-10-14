@@ -13,10 +13,15 @@ def job_snapshot_store():
     return _store
 
 
+_JOBS_WS_PREVIEW_LIMIT = 100
+
+
 def after_live_sync(live_cache: LiveCache) -> None:
     jobs = list(live_cache.iter_jobs())
     _store.upsert_jobs(jobs)
     sync = live_cache.sync_meta()
+    preview_limit = min(_JOBS_WS_PREVIEW_LIMIT, max(live_cache.job_count(), 1))
+    jobs_preview, _ = live_cache.list_jobs(None, preview_limit, sort="job_id")
     live_hub.publish(
         "*",
         {
@@ -24,6 +29,7 @@ def after_live_sync(live_cache: LiveCache) -> None:
             "sync": sync.model_dump(mode="json"),
             "job_count": live_cache.job_count(),
             "task_count": live_cache.task_count(),
+            "jobs_preview": [job.model_dump(mode="json") for job in jobs_preview],
         },
     )
 

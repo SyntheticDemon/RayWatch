@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import { TaskDrawer } from "@/features/jobs/task-drawer";
 import { TaskTree } from "@/features/jobs/task-tree";
@@ -9,6 +9,8 @@ import { useJobLogs } from "@/shared/hooks/use-job-logs";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { Button } from "@/shared/ui/primitives";
 import { LogViewer } from "@/shared/ui/log-viewer";
+import { jobDetailBreadcrumbs } from "@/shared/ui/breadcrumb-trail";
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { SyncStatus } from "@/shared/ui/sync-status";
 
 function filterLogsForTask(logs: string, taskId: string | null): string {
@@ -83,20 +85,20 @@ export function JobDetailPage() {
   const job = jobQuery.data.job;
   const tasks = tasksQuery.data?.items ?? [];
   const sync = jobQuery.data.sync;
+  const selectedTask = selectedTaskId
+    ? (tasks.find((t) => t.task_id === selectedTaskId) ?? taskQuery.data?.task)
+    : undefined;
 
   return (
     <main className="job-detail">
-      <nav className="breadcrumbs" aria-label="Breadcrumb">
-        <Link to="/">Jobs</Link>
-        <span> / </span>
-        <span>{job.job_id}</span>
-        {selectedTaskId && (
-          <>
-            <span> / </span>
-            <span className="mono">task</span>
-          </>
-        )}
-      </nav>
+      <Breadcrumbs
+        items={jobDetailBreadcrumbs({
+          jobId: job.job_id,
+          entrypoint: job.entrypoint,
+          taskId: selectedTaskId,
+          taskLabel: selectedTask?.name || selectedTask?.func_or_class,
+        })}
+      />
       <header className="job-detail-header">
         <h1>{job.job_id}</h1>
         <div className="page-title-actions">

@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { fetchTask } from "@/shared/api/client";
+import { taskPageBreadcrumbs } from "@/shared/ui/breadcrumb-trail";
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 
 export function TaskDetailPage() {
   const { taskId = "" } = useParams();
@@ -17,13 +19,13 @@ export function TaskDetailPage() {
   const task = data.task;
   return (
     <main>
-      <nav className="breadcrumbs">
-        <Link to="/">Jobs</Link>
-        <span> / </span>
-        <Link to={`/jobs/${task.job_id}?task=${task.task_id}`}>{task.job_id}</Link>
-        <span> / </span>
-        <span className="mono">{task.task_id}</span>
-      </nav>
+      <Breadcrumbs
+        items={taskPageBreadcrumbs({
+          jobId: task.job_id,
+          taskId: task.task_id,
+          taskLabel: task.name || task.func_or_class,
+        })}
+      />
       <h1>Task</h1>
       <dl className="meta-grid">
         <dt>Status</dt>

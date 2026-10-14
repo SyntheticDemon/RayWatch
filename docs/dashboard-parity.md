@@ -48,16 +48,16 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 |--------------------------|----------|--------|-------|
 | Auto-refresh job list | Sync loop + TanStack Query | **done** | |
 | Stale / disconnected indicator | Sync banner + `/freshness` | **done** | |
-| WebSocket live patches | `WS /ws/live` | **partial** | Jobs hub + job detail invalidate on sync; job row patched from WS when open |
+| WebSocket live patches | `WS /ws/live` | **partial** | `jobs_preview` patches visible rows; job detail gets full `job` payload |
 | Manual resync | `POST /sync/trigger` | **done** | |
 
 ### Search & navigation
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Global search by id | `GET /search` + command palette | **partial** | v1 ids from index only |
+| Global search by id | `GET /search` + command palette | **partial** | Jobs, tasks, actors, nodes; ⌘K nav shortcuts; cluster row highlight |
 | Deep links | React routes | **done** | `/jobs/:id`, tasks |
-| Breadcrumbs | App shell | **partial** | |
+| Breadcrumbs | Shared `Breadcrumbs` + job/task/cluster trails | **done** | Jobs → entrypoint/job → task name |
 
 ### Cluster-level (Ray “Overview”)
 

@@ -1,23 +1,27 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-import type { JobResponse, SyncMeta } from "@/shared/api/client";
+import type { JobResponse, JobSummary, SyncMeta } from "@/shared/api/client";
 
 type LiveSyncMessage = {
   type?: string;
   sync?: SyncMeta;
   job?: JobResponse["job"];
+  jobs_preview?: JobSummary[];
 };
 
 type UseLiveSyncOptions = {
   onSync?: () => void;
+  onJobsPreview?: (jobs: JobSummary[], sync: SyncMeta) => void;
 };
 
 export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
   const queryClient = useQueryClient();
   const [connected, setConnected] = useState(false);
   const onSyncRef = useRef(options?.onSync);
+  const onJobsPreviewRef = useRef(options?.onJobsPreview);
   onSyncRef.current = options?.onSync;
+  onJobsPreviewRef.current = options?.onJobsPreview;
 
   useEffect(() => {
     const path = jobId ? `/ws/live?job_id=${encodeURIComponent(jobId)}` : "/ws/live";
@@ -44,7 +48,25 @@ export function useLiveSync(jobId?: string, options?: UseLiveSyncOptions) {
         if (message?.type === "sync") {
           onSyncRef.current?.();
           if (!jobId) {
-            queryClient.invalidateQueries({ queryKey: ["jobs"] });
+            const preview = message.jobs_preview;
+            const sync = message.sync;
+            if (preview?.length && sync) {
+              onJobsPreviewRef.current?.(preview, sync);
+              queryClient.setQueriesData(
+                { predicate: (q) => q.queryKey[0] === "jobs" },
+                (old: { items?: JobSummary[]; sync?: SyncMeta } | undefined) => {
+                  if (!old?.items?.length) return old;
+                  const byId = new Map(preview.map((job) => [job.job_id, job]));
+                  return {
+                    ...old,
+                    items: old.items.map((job) => byId.get(job.job_id) ?? job),
+                    sync,
+                  };
+                },
+              );
+            } else {
+              queryClient.invalidateQueries({ queryKey: ["jobs"] });
+            }
             queryClient.invalidateQueries({ queryKey: ["cluster-overview"] });
             queryClient.invalidateQueries({ queryKey: ["cluster-nodes"] });
             queryClient.invalidateQueries({ queryKey: ["cluster-actors"] });

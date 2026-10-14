@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+test("fixture job shows breadcrumb trail", async ({ page }) => {
+  await page.goto("/jobs/01000000");
+  const trail = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(trail.getByRole("link", { name: "Jobs" })).toBeVisible();
+  await expect(trail).toContainText("train.py");
+});
+
 test("fixture job logs panel shows content and toolbar works", async ({ page }) => {
   await page.goto("/jobs/01000000");
   await expect(page.getByRole("heading", { name: "Job logs" })).toBeVisible();

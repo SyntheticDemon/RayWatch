@@ -147,7 +147,8 @@ class LiveCache:
         for task_id, task in self._state.tasks.items():
             if len(hits) >= limit:
                 break
-            if needle in task_id.lower() or needle in task.name.lower():
+            func = (task.func_or_class or "").lower()
+            if needle in task_id.lower() or needle in task.name.lower() or needle in func:
                 hits.append(
                     {
                         "kind": "task",
@@ -155,6 +156,34 @@ class LiveCache:
                         "job_id": task.job_id,
                         "label": task.name or task.func_or_class or task_id,
                         "status": task.status.value,
+                    }
+                )
+        for actor_id, actor in self._state.actors.items():
+            if len(hits) >= limit:
+                break
+            class_name = (actor.class_name or "").lower()
+            if needle in actor_id.lower() or needle in class_name:
+                hits.append(
+                    {
+                        "kind": "actor",
+                        "id": actor_id,
+                        "job_id": actor.job_id,
+                        "label": actor.class_name or actor_id,
+                        "status": actor.state,
+                    }
+                )
+        for node_id, node in self._state.nodes.items():
+            if len(hits) >= limit:
+                break
+            host = (node.hostname or "").lower()
+            if needle in node_id.lower() or needle in host:
+                hits.append(
+                    {
+                        "kind": "node",
+                        "id": node_id,
+                        "job_id": None,
+                        "label": node.hostname or node_id,
+                        "status": node.state,
                     }
                 )
         return hits[:limit]

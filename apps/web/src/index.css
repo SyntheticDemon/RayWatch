@@ -685,6 +685,36 @@ a:hover {
   color: var(--text-tertiary);
 }
 
+.breadcrumbs-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumbs-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.breadcrumbs-item:not(:last-child)::after {
+  content: "/";
+  color: var(--text-tertiary);
+  opacity: 0.65;
+}
+
+.breadcrumbs-current {
+  color: var(--text-secondary);
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .panel {
   margin-top: 1.5rem;
   padding: 1.25rem;
@@ -831,6 +861,7 @@ a:hover {
   font-size: 0.8125rem;
 }
 
+.palette-item-active,
 .palette-item:hover {
   background: var(--accent-muted);
 }
@@ -840,6 +871,17 @@ a:hover {
   font-size: 0.65rem;
   font-weight: 600;
   color: var(--text-tertiary);
+}
+
+.palette-status {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+}
+
+.row-highlight {
+  background: var(--accent-muted);
+  outline: 1px solid var(--accent);
 }
 
 .tree-toggle {

@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import {
   fetchClusterActors,
@@ -8,6 +10,8 @@ import {
 } from "@/shared/api/client";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { Button } from "@/shared/ui/primitives";
+import { clusterBreadcrumbs } from "@/shared/ui/breadcrumb-trail";
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { SyncStatus } from "@/shared/ui/sync-status";
 
 function formatGiB(bytes: number): string {
@@ -18,6 +22,20 @@ function formatGiB(bytes: number): string {
 export function ClusterPage() {
   const queryClient = useQueryClient();
   const { connected } = useLiveSync();
+  const [searchParams] = useSearchParams();
+  const focusKind = searchParams.get("focus");
+  const focusId = searchParams.get("id");
+  const highlightRef = useRef<HTMLTableRowElement | null>(null);
+
+  const nodeMatchesFocus = useMemo(() => {
+    if (focusKind !== "node" || !focusId) return () => false;
+    return (nodeId: string) => nodeId === focusId;
+  }, [focusKind, focusId]);
+
+  const actorMatchesFocus = useMemo(() => {
+    if (focusKind !== "actor" || !focusId) return () => false;
+    return (actorId: string) => actorId === focusId;
+  }, [focusKind, focusId]);
 
   const overviewQuery = useQuery({
     queryKey: ["cluster-overview"],
@@ -46,11 +64,16 @@ export function ClusterPage() {
     },
   });
 
+  useEffect(() => {
+    highlightRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [focusId, focusKind, nodesQuery.data, actorsQuery.data]);
+
   const sync = overviewQuery.data?.sync ?? nodesQuery.data?.sync ?? actorsQuery.data?.sync;
   const overview = overviewQuery.data?.overview;
 
   return (
     <main className="cluster-page">
+      <Breadcrumbs items={clusterBreadcrumbs()} />
       <header className="page-title-row">
         <div>
           <h1 className="page-title">Cluster</h1>
@@ -125,7 +148,11 @@ export function ClusterPage() {
               </thead>
               <tbody>
                 {nodesQuery.data?.items.map((node) => (
-                  <tr key={node.node_id}>
+                  <tr
+                    key={node.node_id}
+                    ref={nodeMatchesFocus(node.node_id) ? highlightRef : undefined}
+                    className={nodeMatchesFocus(node.node_id) ? "row-highlight" : undefined}
+                  >
                     <td className="mono cell-ellipsis" title={node.node_id}>
                       {node.node_id.slice(0, 12)}…
                     </td>
@@ -164,7 +191,11 @@ export function ClusterPage() {
               </thead>
               <tbody>
                 {actorsQuery.data?.items.map((actor) => (
-                  <tr key={actor.actor_id}>
+                  <tr
+                    key={actor.actor_id}
+                    ref={actorMatchesFocus(actor.actor_id) ? highlightRef : undefined}
+                    className={actorMatchesFocus(actor.actor_id) ? "row-highlight" : undefined}
+                  >
                     <td className="mono cell-ellipsis" title={actor.actor_id}>
                       {actor.actor_id}
                     </td>

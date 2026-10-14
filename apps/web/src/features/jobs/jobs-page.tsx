@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { VirtualizedJobsTable } from "@/features/jobs/virtualized-jobs-table";
-import { fetchJobs, triggerSync, type JobSummary } from "@/shared/api/client";
+import { fetchJobs, triggerSync, type JobSummary, type SyncMeta } from "@/shared/api/client";
 import { useLiveSync } from "@/shared/hooks/use-live-sync";
 import { Button, Checkbox, Field, Input, SearchField, Select } from "@/shared/ui/primitives";
 import { SyncStatus } from "@/shared/ui/sync-status";
@@ -20,7 +20,16 @@ export function JobsPage() {
   const [startedBefore, setStartedBefore] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const queryClient = useQueryClient();
-  const { connected } = useLiveSync();
+  const { connected } = useLiveSync(undefined, {
+    onJobsPreview: (preview, sync) => {
+      const byId = new Map(preview.map((job) => [job.job_id, job]));
+      setRows((prev) => prev.map((job) => byId.get(job.job_id) ?? job));
+      queryClient.setQueriesData(
+        { predicate: (q) => q.queryKey[0] === "jobs" },
+        (old: { sync?: SyncMeta } | undefined) => (old ? { ...old, sync } : old),
+      );
+    },
+  });
 
   const { data, isLoading, error, isFetching } = useQuery({
     queryKey: [
