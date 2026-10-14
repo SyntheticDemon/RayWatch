@@ -19,7 +19,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     repo_root = Path(__file__).resolve().parents[5]
     fixture_default = repo_root / "tests" / "fixtures" / "ray" / "jobs_list.json"
-    if not os.environ.get("RAYWATCH_FIXTURE_JOBS") and fixture_default.is_file():
+    use_live = os.environ.get("RAYWATCH_USE_LIVE") == "1"
+    if use_live:
+        os.environ.pop("RAYWATCH_FIXTURE_JOBS", None)
+    elif not os.environ.get("RAYWATCH_FIXTURE_JOBS") and fixture_default.is_file():
         os.environ.setdefault("RAYWATCH_FIXTURE_JOBS", str(fixture_default))
 
     await sync_active_jobs(live_cache)

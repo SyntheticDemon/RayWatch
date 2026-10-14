@@ -1,0 +1,17 @@
+{
+  "result": true,
+  "msg": "",
+  "data": {
+    "result": {
+      "total": 1,
+      "result": [
+        {
+          "submission_id": "raysubmit_test001",
+          "entrypoint": "python train.py",
+          "status": "RUNNING",
+          "message": null
+        }
+      ]
+    }
+  }
+}

@@ -9,6 +9,7 @@ RayWatch is a read-optimized operations and observability layer on top of [Ray](
 | [architecture-full-diagram.md](./architecture-full-diagram.md) | **Full component diagram** (read this for the big picture) |
 | [product-vision.md](./product-vision.md) | UX goals (jobs hub, nesting, Dagster-like workflow, simple dark UI) |
 | [ray-primer.md](./ray-primer.md) | Ray concepts for high-level architects |
+| [ray-grounding.md](./ray-grounding.md) | Real Ray version pin + integration workflow |
 | [frontend.md](./frontend.md) | Planned web app structure and UI patterns |
 | [frontend-features.md](./frontend-features.md) | Feature list by phase (v1 vs later) |
 | [ray-cli-console.md](./ray-cli-console.md) | Browser-hosted `ray` CLI (guided → PTY, security) |

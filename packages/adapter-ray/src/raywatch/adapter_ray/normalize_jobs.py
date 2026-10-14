@@ -24,14 +24,19 @@ def _map_status(raw: str | None) -> JobStatus:
         return JobStatus.PENDING
 
 
-def normalize_jobs_payload(payload: dict[str, Any], cluster_epoch: str = "default") -> IngestBatch:
-    """
-    Accepts Ray dashboard shape: {"data": {job_id: {...}, ...}} or list under data.
-    """
+def _job_rows_from_payload(payload: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     data = payload.get("data")
     rows: list[tuple[str, dict[str, Any]]] = []
+
+    if isinstance(data, dict) and isinstance(data.get("result"), dict):
+        nested = data["result"].get("result")
+        if isinstance(nested, list):
+            data = nested
+
     if isinstance(data, dict):
-        rows = [(key, value) for key, value in data.items() if isinstance(value, dict)]
+        for key, value in data.items():
+            if isinstance(value, dict) and key not in {"result", "total"}:
+                rows.append((str(key), value))
     elif isinstance(data, list):
         for item in data:
             if not isinstance(item, dict):
@@ -39,6 +44,12 @@ def normalize_jobs_payload(payload: dict[str, Any], cluster_epoch: str = "defaul
             job_id = str(item.get("submission_id") or item.get("job_id") or item.get("id") or "")
             if job_id:
                 rows.append((job_id, item))
+    return rows
+
+
+def normalize_jobs_payload(payload: dict[str, Any], cluster_epoch: str = "default") -> IngestBatch:
+    """Ray dashboard jobs JSON (legacy map or 2.59+ paginated list)."""
+    rows = _job_rows_from_payload(payload)
 
     ops: list[IngestOp] = []
     for job_id, row in rows:

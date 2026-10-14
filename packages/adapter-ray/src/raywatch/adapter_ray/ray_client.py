@@ -13,7 +13,8 @@ def ray_dashboard_base_url() -> str:
 
 
 async def fetch_jobs_json(client: httpx.AsyncClient) -> dict[str, Any]:
-    url = f"{ray_dashboard_base_url()}/api/v0/jobs/"
+    # Ray 2.59+: trailing slash returns 404 on some versions.
+    url = f"{ray_dashboard_base_url()}/api/v0/jobs"
     response = await client.get(url, timeout=30.0)
     response.raise_for_status()
     body = response.json()

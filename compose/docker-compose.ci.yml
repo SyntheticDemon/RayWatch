@@ -13,11 +13,14 @@ services:
       retries: 10
 
   ray-head:
-    image: rayproject/ray:2.44.1-py312
-    command: >
-      ray start --head --disable-usage-stats
-      && sleep infinity
-    shm_size: "2gb"
+    image: rayproject/ray:${RAY_VERSION:-2.59.0}-py312
+    command:
+      - bash
+      - -lc
+      - |
+        ray start --head --dashboard-host=0.0.0.0 --disable-usage-stats
+        sleep infinity
+    shm_size: "4gb"
 
   test:
     build:
