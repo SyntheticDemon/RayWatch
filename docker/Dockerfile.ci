@@ -1,0 +1,16 @@
+FROM python:3.12-slim-bookworm
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir uv
+
+COPY pyproject.toml uv.lock ./
+COPY packages ./packages
+COPY services ./services
+COPY tests ./tests
+
+RUN uv sync --all-packages
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+CMD ["uv", "run", "pytest", "-m", "not integration", "-v"]

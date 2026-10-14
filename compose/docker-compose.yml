@@ -1,0 +1,58 @@
+# Local dev: Postgres + API (+ Ray head when adapter is ready).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: raywatch
+      POSTGRES_PASSWORD: raywatch
+      POSTGRES_DB: raywatch
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raywatch"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  ray-head:
+    image: rayproject/ray:2.44.1-py312
+    command: >
+      ray start --head --dashboard-host=0.0.0.0 --disable-usage-stats
+      && sleep infinity
+    ports:
+      - "8265:8265"
+      - "10001:10001"
+    shm_size: "2gb"
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql://raywatch:raywatch@postgres:5432/raywatch
+      RAY_ADDRESS: ray://ray-head:10001
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # collector:
+  #   build:
+  #     context: ..
+  #     dockerfile: docker/Dockerfile.collector
+  #   environment:
+  #     DATABASE_URL: postgresql://raywatch:raywatch@postgres:5432/raywatch
+  #     RAY_ADDRESS: ray://ray-head:10001
+  #   depends_on:
+  #     - postgres
+  #     - ray-head
+
+  # web:
+  #   build:
+  #     context: ..
+  #     dockerfile: docker/Dockerfile.web
+  #   ports:
+  #     - "3000:80"
+  #   depends_on:
+  #     - api
