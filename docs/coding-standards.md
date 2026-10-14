@@ -12,7 +12,7 @@ Living document. **Propose changes via PR.**
 | **No agent-shaped code** | Avoid dozens of 3-line wrappers, vague `data`/`result`/`handle` names, and “layer cake” for show. Write what a human would want to read in six months. |
 | **Data-driven transforms** | Prefer **pipelines**: `raw → normalize → apply_to_index → events`. Pure functions over nested class hierarchies. **No inheritance trees** unless the stdlib/SDK forces it. |
 | **Abstraction** | Introduce interfaces/base classes **only** when the same behavior is reused in 2+ places (e.g. `RuntimeAdapter` for Ray). Otherwise keep it concrete. |
-| **Intuitive names** | Names state *what* something is in the domain (`job_bundle`, `ingest_lag_ms`). See [naming preferences](#naming-preferences-game) below. |
+| **Intuitive names** | Short, plain words; dense meaning without jargon. Locked list: [naming-registry.md](./naming-registry.md). |
 
 ---
 
@@ -133,28 +133,11 @@ OpenAPI contract; cursor pagination; freshness fields (`source`, `last_ingest_at
 
 ---
 
-## Naming preferences (game)
+## Naming (locked)
 
-We calibrate names together. **Reply with 👍 / 👎 / meh** (or a short note) per row; locked choices get copied into [naming-registry.md](./naming-registry.md).
+Team chose **column B** style: simple, concise, no heavy words. Full table: **[naming-registry.md](./naming-registry.md)**.
 
-| # | Name | Context |
-|---|------|---------|
-| A | `ingest_lag_ms` | API freshness field |
-| B | `sync_delay` | same |
-| C | `hot_index` | RAM store |
-| D | `live_cache` | same |
-| E | `job_bundle` | archived full job snapshot |
-| F | `job_snapshot` | same |
-| G | `canonical_task` | after normalizer |
-| H | `normalized_task` | same |
-| I | `reconcile_running_jobs` | periodic diff |
-| J | `sync_active_jobs` | same |
-| K | `is_stale` | UI/API flag |
-| L | `out_of_sync_with_ray` | same |
-| M | `state_delta` | incremental change batch |
-| N | `ingest_batch` | same |
-| O | `lineage_edge` | metadata graph edge |
-| P | `metadata_link` | same |
+Examples in code: `sync_delay`, `live_cache`, `job_snapshot`, `normalized_task`, `sync_active_jobs`, `ray_out_of_sync`, `ingest_batch`, `metadata_link`.
 
 ---
 

@@ -19,6 +19,7 @@ RayWatch is a read-optimized operations and observability layer on top of [Ray](
 | [sync-with-ray.md](./sync-with-ray.md) | Live cache vs Ray truth; anti-desync |
 | [coding-standards.md](./coding-standards.md) | Repo layout, Python/TS, API, tests, PRs |
 | [naming-registry.md](./naming-registry.md) | Locked domain names (after naming game) |
+| [mvp-scope.md](./mvp-scope.md) | Implementation milestones M0–M6 |
 | [backend-technology.md](./backend-technology.md) | Modern fast Python stack (uv, Granian, async collector) |
 | [testing.md](./testing.md) | Unit, contract, Ray-in-Docker integration, e2e |
 | [non-functional-requirements.md](./non-functional-requirements.md) | Performance, scale, security, ops, UX targets |
