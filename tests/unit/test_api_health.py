@@ -12,9 +12,10 @@ async def test_health_returns_ok(api_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_ready_returns_flags(api_client: AsyncClient) -> None:
+async def test_ready_after_fixture_sync(api_client: AsyncClient) -> None:
     response = await api_client.get("/ready")
     assert response.status_code == 200
     body = response.json()
     assert body["ready"] is True
     assert body["ray_out_of_sync"] is False
+    assert body["job_count"] >= 1

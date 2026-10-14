@@ -1,12 +1,13 @@
-import { JobsPage } from "@/features/jobs/jobs-page";
+import type { ReactNode } from "react";
+
 import { AppShell } from "@/shared/ui/app-shell";
 
-function App() {
-  return (
-    <AppShell>
-      <JobsPage />
-    </AppShell>
-  );
+type AppProps = {
+  children: ReactNode;
+};
+
+function App({ children }: AppProps) {
+  return <AppShell>{children}</AppShell>;
 }
 
 export default App;

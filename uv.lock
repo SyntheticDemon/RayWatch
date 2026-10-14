@@ -553,6 +553,9 @@ version = "0.1.0"
 source = { editable = "services/api" }
 dependencies = [
     { name = "fastapi" },
+    { name = "httpx" },
+    { name = "raywatch-adapter-ray" },
+    { name = "raywatch-collector" },
     { name = "raywatch-engine" },
     { name = "raywatch-model" },
     { name = "uvicorn", extra = ["standard"] },
@@ -561,6 +564,9 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
+    { name = "httpx", specifier = ">=0.28" },
+    { name = "raywatch-adapter-ray", editable = "packages/adapter-ray" },
+    { name = "raywatch-collector", editable = "services/collector" },
     { name = "raywatch-engine", editable = "packages/engine" },
     { name = "raywatch-model", editable = "packages/model" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32" },

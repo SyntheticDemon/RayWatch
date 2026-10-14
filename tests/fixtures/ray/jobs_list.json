@@ -1,0 +1,32 @@
+{
+  "result": true,
+  "data": {
+    "01000000": {
+      "submission_id": "01000000",
+      "entrypoint": "python train.py",
+      "status": "RUNNING",
+      "start_time": 1710000000.0,
+      "task_stats": {
+        "RUNNING": 4,
+        "FAILED": 0,
+        "total": 12
+      },
+      "metadata": {
+        "user": "demo"
+      }
+    },
+    "02000000": {
+      "submission_id": "02000000",
+      "entrypoint": "python eval.py",
+      "status": "SUCCEEDED",
+      "start_time": 1709990000.0,
+      "end_time": 1710000000.0,
+      "task_stats": {
+        "RUNNING": 0,
+        "FAILED": 0,
+        "total": 3
+      }
+    }
+  },
+  "msg": "Got all job info."
+}

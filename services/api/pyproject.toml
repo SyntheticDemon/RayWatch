@@ -5,13 +5,18 @@ requires-python = ">=3.12"
 dependencies = [
     "raywatch-model",
     "raywatch-engine",
+    "raywatch-adapter-ray",
+    "raywatch-collector",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
+    "httpx>=0.28",
 ]
 
 [tool.uv.sources]
 raywatch-model = { workspace = true }
 raywatch-engine = { workspace = true }
+raywatch-adapter-ray = { workspace = true }
+raywatch-collector = { workspace = true }
 
 [project.scripts]
 raywatch-api = "raywatch.api.main:run"
