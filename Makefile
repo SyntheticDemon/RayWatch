@@ -76,7 +76,11 @@ benchmark-ray: ray-up
 	@echo "Waiting for Ray dashboard..."
 	@for i in $$(seq 1 45); do curl -sf http://127.0.0.1:8265/api/version >/dev/null && break; sleep 2; done
 	RAY_INTEGRATION=1 RAYWATCH_BENCHMARK_COMPARE_RAY=1 RAYWATCH_BENCHMARK_WRITE=1 \
+		RAYWATCH_BENCHMARK_ASSERT_WARM="$(RAYWATCH_BENCHMARK_ASSERT_WARM)" \
 		RAY_DASHBOARD_URL=http://127.0.0.1:8265 $(MAKE) benchmark
+
+benchmark-ray-assert:
+	RAYWATCH_BENCHMARK_ASSERT_WARM=1 $(MAKE) benchmark-ray
 
 dev-api:
 	PYTHONPATH="$(PYTHONPATH)" uv run raywatch-api

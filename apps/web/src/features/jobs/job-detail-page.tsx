@@ -51,7 +51,7 @@ export function JobDetailPage() {
     queryKey: ["job-logs", jobId],
     queryFn: () => fetchJobLogs(jobId),
     enabled: Boolean(jobId),
-    refetchInterval: logsPaused ? false : 5000,
+    refetchInterval: logsPaused || connected ? false : 5000,
   });
 
   const taskQuery = useQuery({

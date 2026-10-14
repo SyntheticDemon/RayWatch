@@ -242,3 +242,24 @@ async def collect_scale_rows(
             )
         )
     return rows
+
+
+def warm_parity_slack() -> float:
+    """RayWatch warm p95 may exceed Ray by this factor (default 5% — we aim to beat Ray)."""
+    return float(os.environ.get("RAYWATCH_WARM_PARITY_SLACK", "1.05"))
+
+
+def warm_parity_violations(rows: list[ScaleLatencyRow]) -> list[str]:
+    slack = warm_parity_slack()
+    violations: list[str] = []
+    for row in rows:
+        ray_warm = row.ray_dashboard_list_warm_p95_ms
+        if ray_warm is None:
+            continue
+        allowed = ray_warm * slack
+        if row.raywatch_list_warm_p95_ms > allowed:
+            violations.append(
+                f"jobs={row.job_count}: raywatch warm p95 {row.raywatch_list_warm_p95_ms:.2f}ms "
+                f"> ray dashboard warm {ray_warm:.2f}ms (cap {allowed:.2f}ms at slack {slack})"
+            )
+    return violations

@@ -10,6 +10,7 @@ from support.dashboard_benchmark import (
     collect_scale_rows,
     format_latency_table,
     parse_scale_list,
+    warm_parity_violations,
 )
 from support.latency_stats import LatencySample, measure_async, percentile_ms
 from support.perf_harness import (
@@ -185,3 +186,28 @@ async def test_ray_dashboard_reachable_false(monkeypatch: pytest.MonkeyPatch) ->
 
     monkeypatch.setenv("RAY_DASHBOARD_URL", "http://127.0.0.1:1")
     assert await ray_dashboard_reachable() is False
+
+
+def test_warm_parity_violations_detects_slower_raywatch() -> None:
+    rows = [
+        ScaleLatencyRow(
+            job_count=10,
+            raywatch_list_cold_ms=1.0,
+            raywatch_list_warm_p95_ms=10.0,
+            raywatch_get_warm_p95_ms=1.0,
+            ray_dashboard_list_cold_ms=1.0,
+            ray_dashboard_list_warm_p95_ms=5.0,
+            ray_jobs_in_payload=10,
+        )
+    ]
+    assert warm_parity_violations(rows)
+    rows[0] = ScaleLatencyRow(
+        job_count=10,
+        raywatch_list_cold_ms=1.0,
+        raywatch_list_warm_p95_ms=4.0,
+        raywatch_get_warm_p95_ms=1.0,
+        ray_dashboard_list_cold_ms=1.0,
+        ray_dashboard_list_warm_p95_ms=5.0,
+        ray_jobs_in_payload=10,
+    )
+    assert not warm_parity_violations(rows)

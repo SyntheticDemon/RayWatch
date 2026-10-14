@@ -48,7 +48,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 |--------------------------|----------|--------|-------|
 | Auto-refresh job list | Sync loop + TanStack Query | **done** | |
 | Stale / disconnected indicator | Sync banner + `/freshness` | **done** | |
-| WebSocket live patches | `WS /ws/live` | **partial** | API + tests; UI wiring incremental |
+| WebSocket live patches | `WS /ws/live` | **partial** | Jobs hub + job detail invalidate on sync; job row patched from WS when open |
 | Manual resync | `POST /sync/trigger` | **done** | |
 
 ### Search & navigation
@@ -81,10 +81,11 @@ Contract and behavior tests should stay aligned with this list. Primary file: `t
 | `GET /search` | yes | — |
 | `WS /ws/live` | yes | — |
 | `GET /tasks/{id}` | yes | — |
+| `GET /cluster/nodes`, `GET /cluster/actors` | yes | — |
 
 ## Next engineering priorities (parity order)
 
-1. **Warm benchmark column** — always published in `jobs-list-latency.md`; run `make benchmark-ray` before claiming parity on jobs list latency.
+1. **Warm benchmark column** — published in `jobs-list-latency.md`; gate with `make benchmark-ray-assert` when Ray head is up.
 2. **Live task ingest** — close task tree gap vs dashboard on real clusters (`M2` in [mvp-scope.md](./mvp-scope.md)).
 3. **Log tail UX** — stream/tail parity with dashboard job logs (API + UI).
 4. **WS patches on open job** — match dashboard “live” feel without polling storms.

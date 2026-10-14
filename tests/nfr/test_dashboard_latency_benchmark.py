@@ -10,6 +10,7 @@ from support.dashboard_benchmark import (
     maybe_write_benchmark_table,
     parse_scale_list,
     ray_dashboard_reachable,
+    warm_parity_violations,
 )
 
 pytestmark = pytest.mark.benchmark
@@ -35,3 +36,9 @@ async def test_jobs_list_latency_raywatch_vs_ray_dashboard_table() -> None:
     print(banner + table + "\n")
     path = maybe_write_benchmark_table(table, ray_included=compare_ray)
     print(f"Wrote {path}\n")
+
+    if os.environ.get("RAYWATCH_BENCHMARK_ASSERT_WARM") == "1" and compare_ray:
+        violations = warm_parity_violations(rows)
+        assert not violations, "Warm jobs-list p95 must beat Ray dashboard:\n" + "\n".join(
+            violations
+        )

@@ -82,7 +82,7 @@ CI web job runs `npm run test:e2e` on every PR.
 | **Read-path regression** | `make perf` — p95 vs `tests/perf/baselines.json` (+15% slack); log layers in [perf-improvement-log.md](./perf-improvement-log.md) |
 | **API contract (all routes)** | `tests/unit/test_api_routes_complete.py` — pagination, 404s, schema keys, logs error path |
 | **Measurement stack** | `tests/unit/test_measurement_stack.py`, `test_measurement_regression_guards.py` — latency stats, perf harness, benchmark helpers |
-| **Dashboard comparison (informational)** | `make benchmark` / `make benchmark-ray` — markdown table vs Ray `GET /api/v0/jobs` (no CI thresholds; Ray submit capped) |
+| **Dashboard comparison (informational)** | `make benchmark` / `make benchmark-ray` — markdown table vs Ray `GET /api/v0/jobs`; `make benchmark-ray-assert` fails if RayWatch warm p95 does not beat Ray (5% slack) |
 
 ## Local developer workflow
 

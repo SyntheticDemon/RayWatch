@@ -1,6 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import type { JobResponse, SyncMeta } from "@/shared/api/client";
+
+type LiveSyncMessage = {
+  type?: string;
+  sync?: SyncMeta;
+  job?: JobResponse["job"];
+};
+
 export function useLiveSync(jobId?: string) {
   const queryClient = useQueryClient();
   const [connected, setConnected] = useState(false);
@@ -19,7 +27,33 @@ export function useLiveSync(jobId?: string) {
         setConnected(false);
         retry = setTimeout(connect, 3000);
       };
-      ws.onmessage = () => {
+      ws.onmessage = (event) => {
+        let message: LiveSyncMessage | null = null;
+        try {
+          message = JSON.parse(event.data as string) as LiveSyncMessage;
+        } catch {
+          message = null;
+        }
+
+        if (message?.type === "sync") {
+          if (!jobId) {
+            queryClient.invalidateQueries({ queryKey: ["jobs"] });
+          } else if (message.job) {
+            queryClient.setQueryData<JobResponse>(["job", jobId], (prev) => {
+              const sync = message.sync ?? prev?.sync;
+              if (!sync) return prev;
+              return { job: message.job!, sync };
+            });
+            queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
+            queryClient.invalidateQueries({ queryKey: ["job-logs", jobId] });
+          } else {
+            queryClient.invalidateQueries({ queryKey: ["job", jobId] });
+            queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
+            queryClient.invalidateQueries({ queryKey: ["job-logs", jobId] });
+          }
+          return;
+        }
+
         queryClient.invalidateQueries({ queryKey: jobId ? ["job", jobId] : ["jobs"] });
         if (jobId) {
           queryClient.invalidateQueries({ queryKey: ["job-tasks", jobId] });
