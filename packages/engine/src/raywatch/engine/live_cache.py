@@ -323,12 +323,14 @@ class LiveCache:
         nodes = list(self._state.nodes.values())
         alive = [n for n in nodes if (n.state or "").upper() == "ALIVE"]
         cpu = sum(n.cpu_total or 0.0 for n in nodes)
+        gpu = sum(n.gpu_total or 0.0 for n in nodes)
         memory = sum(n.memory_bytes_total or 0.0 for n in nodes)
         return ClusterOverview(
             nodes_total=len(nodes),
             nodes_alive=len(alive),
             actors_total=len(self._state.actors),
             cpu_total=cpu,
+            gpu_total=gpu,
             memory_bytes_total=memory,
             job_count=self.job_count(),
             task_count=self.task_count(),

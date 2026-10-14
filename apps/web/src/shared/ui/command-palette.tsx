@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { searchEntities } from "@/shared/api/client";
@@ -63,7 +63,7 @@ export function CommandPalette() {
     else navigate(pathForSearchHit(item.hit));
   };
 
-  const onInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const onInputKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (items.length) setActiveIndex((i) => (i + 1) % items.length);

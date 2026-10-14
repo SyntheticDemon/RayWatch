@@ -4,10 +4,18 @@ import { paletteItemsForQuery, pathForSearchHit } from "@/shared/ui/command-pale
 
 describe("pathForSearchHit", () => {
   it("routes cluster entities", () => {
-    expect(pathForSearchHit({ kind: "actor", id: "abc", label: "Foo", job_id: "j1" })).toBe(
-      "/cluster?focus=actor&id=abc",
-    );
-    expect(pathForSearchHit({ kind: "node", id: "n1", label: "host", job_id: null })).toBe(
+    expect(
+      pathForSearchHit({
+        kind: "actor",
+        id: "abc",
+        label: "Foo",
+        job_id: "j1",
+        status: "ALIVE",
+      }),
+    ).toBe("/cluster?focus=actor&id=abc");
+    expect(
+      pathForSearchHit({ kind: "node", id: "n1", label: "host", job_id: null, status: "ALIVE" }),
+    ).toBe(
       "/cluster?focus=node&id=n1",
     );
   });

@@ -37,8 +37,8 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Task detail | `GET /tasks/{id}` + task drawer/page | **partial** | Attempt timeline UI |
-| Worker / node drill-down | Worker card + `GET /cluster/nodes` | **partial** | Expand-one-hop |
+| Task detail | `GET /tasks/{id}` + task drawer/page | **partial** | Shared `TaskInspector` + attempt timeline |
+| Worker / node drill-down | Worker card + actor card + cluster links | **partial** | Actor → node one-hop from live index |
 | Actors, objects, global state browser | `GET /cluster/actors` + search | **partial** | No full object browser |
 | Metrics / charts / GPU views | — | **gap** | Out of v1; not blocking jobs hub |
 
@@ -63,7 +63,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
-| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **partial** | Summary cards (CPU/memory/jobs/tasks); node table; no GPU charts |
+| Cluster status, nodes, resources | `/cluster` + `GET /cluster/overview` | **partial** | CPU/GPU/memory totals + node table; no utilization charts |
 | Serve / Train dashboards | — | **n/a** | Separate products |
 
 ## API coverage map (tests)

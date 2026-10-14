@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
+import { TaskInspector } from "@/features/jobs/task-inspector";
 import { fetchTask } from "@/shared/api/client";
 import { taskPageBreadcrumbs } from "@/shared/ui/breadcrumb-trail";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
@@ -26,15 +27,7 @@ export function TaskDetailPage() {
           taskLabel: task.name || task.func_or_class,
         })}
       />
-      <h1>Task</h1>
-      <dl className="meta-grid">
-        <dt>Status</dt>
-        <dd>{task.status}</dd>
-        <dt>Worker</dt>
-        <dd className="mono">{task.worker_id ?? "—"}</dd>
-        <dt>Actor</dt>
-        <dd className="mono">{task.actor_id ?? "—"}</dd>
-      </dl>
+      <TaskInspector task={task} showJobLink />
     </main>
   );
 }

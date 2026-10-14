@@ -106,6 +106,12 @@ export function ClusterPage() {
             <span className="cluster-summary-value">{overview.cpu_total || "—"}</span>
           </div>
           <div className="cluster-summary-card">
+            <span className="cluster-summary-label">GPUs</span>
+            <span className="cluster-summary-value">
+              {overview.gpu_total > 0 ? overview.gpu_total : "—"}
+            </span>
+          </div>
+          <div className="cluster-summary-card">
             <span className="cluster-summary-label">Memory</span>
             <span className="cluster-summary-value">{formatGiB(overview.memory_bytes_total)}</span>
           </div>
@@ -142,6 +148,7 @@ export function ClusterPage() {
                   <th>Hostname</th>
                   <th>State</th>
                   <th>CPUs</th>
+                  <th>GPUs</th>
                   <th>Memory</th>
                   <th>Head</th>
                 </tr>
@@ -161,6 +168,7 @@ export function ClusterPage() {
                       <span className="badge badge-pending">{node.state ?? "—"}</span>
                     </td>
                     <td>{node.cpu_total ?? "—"}</td>
+                    <td>{node.gpu_total ?? "—"}</td>
                     <td>{formatGiB(node.memory_bytes_total ?? 0)}</td>
                     <td>{node.is_head ? "Yes" : "—"}</td>
                   </tr>
