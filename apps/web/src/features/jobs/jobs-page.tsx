@@ -2,7 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useJobsHubFilters } from "@/features/jobs/use-jobs-hub-filters";
+import {
+  apiStartedAfter,
+  apiStartedBefore,
+  useJobsHubFilters,
+} from "@/features/jobs/use-jobs-hub-filters";
 import { VirtualizedJobsTable } from "@/features/jobs/virtualized-jobs-table";
 import { mergeJobRows } from "@/shared/lib/merge-jobs-preview";
 import { fetchJobs, triggerSync, type JobSummary, type SyncMeta } from "@/shared/api/client";
@@ -17,9 +21,10 @@ export function JobsPage() {
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [rows, setRows] = useState<JobSummary[]>([]);
   const queryClient = useQueryClient();
+  const allowWsNewRows = filters.timePreset === "all" && !cursor;
   const { connected } = useLiveSync(undefined, {
     onJobsPreview: (preview, sync) => {
-      setRows((prev) => mergeJobRows(prev, preview, { allowNewRows: !cursor }));
+      setRows((prev) => mergeJobRows(prev, preview, { allowNewRows: allowWsNewRows }));
       queryClient.setQueriesData(
         { predicate: (q) => q.queryKey[0] === "jobs" },
         (old: { sync?: SyncMeta } | undefined) => (old ? { ...old, sync } : old),
@@ -32,8 +37,9 @@ export function JobsPage() {
     filters.status,
     filters.sort,
     filters.failed24h,
-    filters.startedAfter,
-    filters.startedBefore,
+    filters.timePreset,
+    filters.timePreset === "custom" ? filters.startedAfter : "",
+    filters.timePreset === "custom" ? filters.startedBefore : "",
     filters.includeArchived,
     filters.jobKind,
     filters.columnFilters.jobId,
@@ -48,8 +54,9 @@ export function JobsPage() {
       filters.status,
       filters.sort,
       filters.failed24h,
-      filters.startedAfter,
-      filters.startedBefore,
+      filters.timePreset,
+      filters.timePreset === "custom" ? filters.startedAfter : "",
+      filters.timePreset === "custom" ? filters.startedBefore : "",
       filters.includeArchived,
       filters.jobKind,
       cursor ?? "",
@@ -63,8 +70,8 @@ export function JobsPage() {
         limit: 50,
         include_archived: filters.includeArchived || undefined,
         failed_within_hours: filters.failed24h ? 24 : undefined,
-        started_after: filters.startedAfter || undefined,
-        started_before: filters.startedBefore || undefined,
+        started_after: apiStartedAfter(filters.timePreset, filters.startedAfter),
+        started_before: apiStartedBefore(filters.timePreset, filters.startedBefore),
         job_kind:
           filters.jobKind === "submission" || filters.jobKind === "internal"
             ? filters.jobKind

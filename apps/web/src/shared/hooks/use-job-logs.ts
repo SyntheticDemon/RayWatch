@@ -7,6 +7,8 @@ const INITIAL_TAIL_LINES = 400;
 type UseJobLogsOptions = {
   paused: boolean;
   pollMs: number;
+  /** When set and not `fixture`, tail live logs via `/ws/job-logs` instead of HTTP poll. */
+  clusterEpoch?: string;
 };
 
 function applyLogBody(
@@ -27,12 +29,23 @@ function applyLogBody(
   return { text: body.logs, length: body.content_length };
 }
 
+function appendLogChunk(prev: string, chunk: string): string {
+  if (!chunk) return prev;
+  if (!prev) return chunk;
+  if (prev.endsWith(chunk) || chunk.startsWith(prev)) {
+    return chunk.length > prev.length ? chunk : prev;
+  }
+  return prev + chunk;
+}
+
 export function useJobLogs(jobId: string, options: UseJobLogsOptions) {
-  const { paused, pollMs } = options;
+  const { paused, pollMs, clusterEpoch } = options;
+  const useRayTail = Boolean(clusterEpoch && clusterEpoch !== "fixture");
   const [text, setText] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const contentLengthRef = useRef(0);
   const textRef = useRef("");
 
@@ -79,10 +92,45 @@ export function useJobLogs(jobId: string, options: UseJobLogsOptions) {
   }, [jobId, load]);
 
   useEffect(() => {
-    if (paused || !jobId) return;
+    if (paused || !jobId || useRayTail) return;
     const id = window.setInterval(() => void load(true), pollMs);
     return () => window.clearInterval(id);
-  }, [paused, jobId, pollMs, load]);
+  }, [paused, jobId, pollMs, load, useRayTail]);
+
+  useEffect(() => {
+    if (paused || !jobId || !useRayTail) {
+      setStreaming(false);
+      return;
+    }
+    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const url = `${proto}//${window.location.host}/ws/job-logs?job_id=${encodeURIComponent(jobId)}`;
+    let ws: WebSocket | null = null;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+
+    const connect = () => {
+      ws = new WebSocket(url);
+      ws.onopen = () => setStreaming(true);
+      ws.onclose = () => {
+        setStreaming(false);
+        retry = setTimeout(connect, 3000);
+      };
+      ws.onerror = () => setStreaming(false);
+      ws.onmessage = (event) => {
+        const chunk = String(event.data);
+        const next = appendLogChunk(textRef.current, chunk);
+        textRef.current = next;
+        contentLengthRef.current = next.length;
+        setText(next);
+      };
+    };
+
+    connect();
+    return () => {
+      if (retry) clearTimeout(retry);
+      ws?.close();
+      setStreaming(false);
+    };
+  }, [paused, jobId, useRayTail]);
 
   const refresh = useCallback(() => {
     contentLengthRef.current = 0;
@@ -91,14 +139,15 @@ export function useJobLogs(jobId: string, options: UseJobLogsOptions) {
   }, [load]);
 
   const tailFromSync = useCallback(() => {
-    if (!paused) void load(true);
-  }, [load, paused]);
+    if (!paused && !useRayTail) void load(true);
+  }, [load, paused, useRayTail]);
 
   return {
     text,
     errorMessage,
     loading,
     fetching,
+    streaming,
     refresh,
     tailFromSync,
   };

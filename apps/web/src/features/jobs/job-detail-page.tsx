@@ -29,21 +29,27 @@ export function JobDetailPage() {
   const [stopConfirm, setStopConfirm] = useState(false);
   const [logsPaused, setLogsPaused] = useState(false);
   const queryClient = useQueryClient();
-  const {
-    text: logText,
-    errorMessage: logError,
-    loading: logsLoading,
-    fetching: logsFetching,
-    refresh: refreshLogs,
-    tailFromSync,
-  } = useJobLogs(jobId, { paused: logsPaused, pollMs: 5000 });
-  const { connected } = useLiveSync(jobId, { onSync: tailFromSync });
+
+  const { connected } = useLiveSync(jobId);
 
   const jobQuery = useQuery({
     queryKey: ["job", jobId],
     queryFn: () => fetchJob(jobId),
     enabled: Boolean(jobId),
     refetchInterval: connected ? false : 5000,
+  });
+
+  const {
+    text: logText,
+    errorMessage: logError,
+    loading: logsLoading,
+    fetching: logsFetching,
+    streaming: logsStreaming,
+    refresh: refreshLogs,
+  } = useJobLogs(jobId, {
+    paused: logsPaused,
+    pollMs: 5000,
+    clusterEpoch: jobQuery.data?.sync.cluster_epoch,
   });
 
   const tasksQuery = useInfiniteQuery({
@@ -203,7 +209,9 @@ export function JobDetailPage() {
       <section className="panel">
         <h2>{selectedTaskId ? "Task logs (filtered)" : "Job logs"}</h2>
         <p className="muted" style={{ marginTop: "-0.25rem", marginBottom: "0.75rem" }}>
-          Tails the latest lines first, then polls for new content (no full-file download in the UI).
+          {logsStreaming
+            ? "Live tail via Ray log WebSocket (recent history loaded over HTTP first)."
+            : "Tails the latest lines first, then polls for new content."}
         </p>
         {logsLoading ? (
           <p className="muted">Loading logs…</p>

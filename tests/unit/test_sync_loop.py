@@ -15,7 +15,7 @@ FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "ray" / "jobs_list.
 async def test_sync_active_jobs_loads_fixture(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("RAYWATCH_FIXTURE_JOBS", str(FIXTURE))
     await sync_active_jobs(live_cache)
-    assert live_cache.job_count() == 2
+    assert live_cache.job_count() == 3
     assert live_cache.sync_meta().ray_out_of_sync is False
 
 

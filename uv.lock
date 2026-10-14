@@ -723,12 +723,14 @@ source = { editable = "packages/adapter-ray" }
 dependencies = [
     { name = "httpx" },
     { name = "raywatch-model" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.28" },
     { name = "raywatch-model", editable = "packages/model" },
+    { name = "websockets", specifier = ">=14.0" },
 ]
 
 [[package]]

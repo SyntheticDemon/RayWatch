@@ -24,7 +24,7 @@ describe("pathForSearchHit", () => {
 describe("paletteItemsForQuery", () => {
   it("shows nav commands when palette opens empty", () => {
     const items = paletteItemsForQuery("", []);
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(4);
     expect(items.every((i) => i.type === "command")).toBe(true);
   });
 

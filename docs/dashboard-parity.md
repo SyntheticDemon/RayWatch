@@ -30,7 +30,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Job detail / status | `GET /jobs/{id}` | **done** | Sync honesty fields |
 | Stop / terminate job | `POST /jobs/{id}/stop` | **done** | Best-effort Ray HTTP |
 | Submit job from UI | — | **n/a** | Ops view; use Ray CLI/SDK |
-| Driver logs (job) | `GET /jobs/{id}/logs` + LogViewer | **close** | UI tails ~400 lines then `after_offset` poll; short server log-body cache on poll; WS-triggered tail; filters; `?log_line=` links |
+| Driver logs (job) | `GET /jobs/{id}/logs` + `WS /ws/job-logs` + LogViewer | **close** | HTTP tail + cache; live clusters proxy Ray `/logs/tail` WS; fixture mode HTTP poll; filters; `?log_line=` links |
 | Task list / nested tasks | `GET /jobs/{id}/tasks` + task tree | **close** | **Nested runs** on job detail; `/internal-runs` hub; cursor + “Load more”; WS `tasks_preview` |
 
 ### Tasks & entities
@@ -38,7 +38,7 @@ Legend: **done** · **partial** · **gap** · **n/a** (RayWatch deliberate scope
 | Ray Dashboard capability | RayWatch | Status | Notes |
 |--------------------------|----------|--------|-------|
 | Task detail | `GET /tasks/{id}` + task drawer/page | **close** | `TaskInspector` + timeline; job/parent links; WS refresh on `/tasks/:id` |
-| Worker / node drill-down | Worker card + actor card + cluster links | **partial** | Actor → node one-hop from live index |
+| Worker / node drill-down | Worker card + actor card + cluster links | **close** | Worker/actor cards; parent/child task links in inspector |
 | Actors, objects, global state browser | `GET /cluster/actors` + **`/actors`** + objects on `/cluster` | **close** | Dedicated **Actors** nav tab; objects on cluster; palette links; not full lineage browser |
 | Metrics / charts / GPU views | Utilization bars + sync-history sparklines | **close** | Recent trend (~4 min); not full Grafana |
 

@@ -1,7 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { TaskAttemptTimeline } from "@/features/jobs/task-attempt-timeline";
-import type { TaskSummary } from "@/shared/api/client";
+import { fetchJobTasks, type TaskSummary } from "@/shared/api/client";
 import { ActorCard } from "@/shared/ui/actor-card";
 import { WorkerCard } from "@/shared/ui/worker-card";
 
@@ -11,6 +12,12 @@ type TaskInspectorProps = {
 };
 
 export function TaskInspector({ task, showJobLink }: TaskInspectorProps) {
+  const childrenQuery = useQuery({
+    queryKey: ["job-tasks", task.job_id, "children", task.task_id],
+    queryFn: () => fetchJobTasks(task.job_id),
+    select: (page) => page.items.filter((row) => row.parent_task_id === task.task_id),
+  });
+
   return (
     <div className="task-inspector">
       <header className="task-inspector-header">
@@ -54,6 +61,24 @@ export function TaskInspector({ task, showJobLink }: TaskInspectorProps) {
           </>
         )}
       </dl>
+      {childrenQuery.data && childrenQuery.data.length > 0 && (
+        <section className="task-inspector-children">
+          <h3 className="task-inspector-subtitle">Child tasks</h3>
+          <ul className="task-child-list">
+            {childrenQuery.data.map((child) => (
+              <li key={child.task_id}>
+                <Link
+                  to={`/tasks/${child.task_id}`}
+                  className="text-link"
+                >
+                  {child.name || child.func_or_class || child.task_id.slice(0, 12)}
+                </Link>
+                <span className="muted"> · {child.status}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
