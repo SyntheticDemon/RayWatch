@@ -1,6 +1,6 @@
 # RayWatch documentation
 
-RayWatch is a read-optimized operations and observability layer on top of [Ray](https://www.ray.io/), without forking Ray. These documents capture product intent, system architecture, and how Ray fits in—for contributors and architects new to Ray.****
+RayWatch is a read-optimized operations and observability layer on top of [Ray](https://www.ray.io/), without forking Ray. These documents capture product intent, system architecture, and how Ray fits in—for contributors and architects new to Ray.
 
 | Document | Purpose |
 |----------|---------|
@@ -18,7 +18,10 @@ RayWatch is a read-optimized operations and observability layer on top of [Ray](
 | [job-retention-requirements.md](./job-retention-requirements.md) | Full per-job bundle persisted |
 | [docker-and-devkit.md](./docker-and-devkit.md) | Images, compose, `make test` kit |
 | [sync-with-ray.md](./sync-with-ray.md) | Live cache vs Ray truth; anti-desync |
+| [engineering-governance.md](./engineering-governance.md) | OSS bar: coverage, ADRs, honest unknowns |
+| [known-challenges.md](./known-challenges.md) | Unsolved problems and hypotheses (sync with architect) |
 | [coding-standards.md](./coding-standards.md) | Repo layout, Python/TS, API, tests, PRs |
+| [perf-testing.md](./perf-testing.md) | Incremental perf layers and baselines |
 | [naming-registry.md](./naming-registry.md) | Locked domain names (after naming game) |
 | [mvp-scope.md](./mvp-scope.md) | Implementation milestones M0–M6 |
 | [MVP-DELIVERY.md](./MVP-DELIVERY.md) | **MVP shipped** — runbook + decisions summary |

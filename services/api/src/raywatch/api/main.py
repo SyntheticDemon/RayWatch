@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from raywatch.api.routes import jobs, meta
+from raywatch.api.routes import jobs, meta, tasks
 from raywatch.api.state import live_cache
 from raywatch.collector.sync_loop import run_sync_loop, sync_active_jobs
 
@@ -47,6 +47,7 @@ app.add_middleware(
 
 app.include_router(meta.router)
 app.include_router(jobs.router)
+app.include_router(tasks.router)
 
 
 @app.get("/health")

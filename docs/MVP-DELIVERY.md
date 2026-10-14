@@ -8,7 +8,7 @@
 | **API** | `GET /jobs`, `GET /jobs/{id}`, `GET /jobs/{id}/tasks`, `GET /freshness`, `POST /jobs/{id}/stop` (calls Ray when not on fixture) |
 | **Honesty** | Every list/detail includes `sync` (`sync_delay_ms`, `ray_out_of_sync`, `last_sync_at`) |
 | **UI** | Jobs table + job detail (status, entrypoint, sync banner) |
-| **Tests** | Normalize golden, API contract, **NFR p95** on jobs list (&lt;200ms @ 1k jobs) and job get (&lt;100ms), sync honesty |
+| **Tests** | Normalize golden, API contract, **NFR p95** on jobs list (&lt;200ms @ 1k jobs) and job get (&lt;100ms), sync honesty, **`make benchmark`** vs Ray dashboard (informational table) |
 
 ## Run it
 
@@ -20,7 +20,9 @@ make dev-api
 cd apps/web && npm run dev
 ```
 
-API loads fixture jobs automatically in dev unless `RAYWATCH_FIXTURE_JOBS` is cleared and `RAY_DASHBOARD_URL` points at a live head.
+**Fixture dev (default):** API uses `tests/fixtures/ray/jobs_list.json` unless `RAYWATCH_USE_LIVE=1`.
+
+**Live Ray (grounded on 2.59):** `make ray-up` → `make dev-api-live` or `make test-integration-ray`. See [ray-grounding.md](./ray-grounding.md).
 
 ## Architectural decisions
 

@@ -108,10 +108,12 @@ OpenAPI contract; cursor pagination; freshness fields (`source`, `last_ingest_at
 
 | Rule | Detail |
 |------|--------|
+| **Coverage** | **`make coverage`** — line coverage ≥ **85%** on `packages/` + `services/` (CI). |
 | **No regressing tests** | Never weaken assertions or delete coverage just to green CI. Fix the code or **ask** before redesigning a test. |
-| **Big changes** | Run **`make test`** (and integration when touching adapter/collector/API). |
+| **Big changes** | `make test` + `make coverage`; adapter/collector/API also `make test-integration-ray` when Docker is available. |
 | **Bug fix** | Regression test or fixture. |
 | **Normalizer** | Golden JSON test. |
+| **Open problems** | Document in [known-challenges.md](./known-challenges.md); architectural choices in [adr/](./adr/). |
 
 ---
 

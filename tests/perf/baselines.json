@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "description": "Maximum allowed p95 (ms) for read-path perf tests. Lower is stricter. Update with PERF_UPDATE_BASELINE=1 after a deliberate win.",
+  "scenarios": {
+    "jobs_list_1000": {
+      "job_count": 1000,
+      "p95_ms": 3.15,
+      "cold_ms": 6.29
+    },
+    "jobs_list_5000": {
+      "job_count": 5000,
+      "p95_ms": 3.95,
+      "cold_ms": 1.61
+    },
+    "jobs_list_10000": {
+      "job_count": 10000,
+      "p95_ms": 1.32,
+      "cold_ms": 1.81
+    },
+    "job_get_5000": {
+      "job_count": 5000,
+      "p95_ms": 2.12,
+      "cold_ms": 5.01
+    }
+  }
+}

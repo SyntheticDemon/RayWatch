@@ -16,7 +16,7 @@ jobs:
       - run: uv sync --all-packages
       - run: make lint
       - run: make typecheck
-      - run: make test
+      - run: make coverage
 
   web:
     runs-on: ubuntu-latest

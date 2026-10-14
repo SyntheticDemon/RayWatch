@@ -58,6 +58,18 @@ def normalize_jobs_payload(payload: dict[str, Any], cluster_epoch: str = "defaul
         running = int(task_stats.get("RUNNING") or task_stats.get("running") or 0)
         failed = int(task_stats.get("FAILED") or task_stats.get("failed") or 0)
         total = int(task_stats.get("total") or running + failed)
+        metadata = {k: str(v) for k, v in (row.get("metadata") or {}).items()}
+        ray_internal = row.get("job_id")
+        driver_info = row.get("driver_info") if isinstance(row.get("driver_info"), dict) else {}
+        if driver_info.get("id"):
+            ray_internal = driver_info.get("id")
+        if ray_internal:
+            metadata["ray_internal_job_id"] = str(ray_internal)
+        else:
+            metadata.setdefault("ray_internal_job_id", job_id)
+        driver_pid = row.get("driver_pid") or row.get("driverPid")
+        if driver_info.get("pid") is not None:
+            driver_pid = driver_info.get("pid")
         job = JobDetail(
             job_id=job_id,
             status=status,
@@ -68,8 +80,8 @@ def normalize_jobs_payload(payload: dict[str, Any], cluster_epoch: str = "defaul
             task_running=running,
             task_failed=failed,
             task_total=total,
-            driver_pid=row.get("driver_pid") or row.get("driverPid"),
-            metadata={k: str(v) for k, v in (row.get("metadata") or {}).items()},
+            driver_pid=int(driver_pid) if driver_pid is not None else None,
+            metadata=metadata,
         )
         ops.append(IngestOp(kind="upsert_job", job=job))
 

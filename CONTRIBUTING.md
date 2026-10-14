@@ -6,14 +6,17 @@ Thanks for helping build RayWatch. This repo is docs-first today; code will foll
 
 1. Install [uv](https://github.com/astral-sh/uv) and Docker.
 2. `cp .env.example .env` and adjust Ray address if needed.
-3. `make test` — fast unit tests.
-4. `docker compose -f compose/docker-compose.yml up` — full stack (when available).
+3. `make test` — unit + NFR SLO tests (excludes integration, benchmark, perf).
+4. `make perf` — read-path latency vs `tests/perf/baselines.json` (see [perf-testing.md](docs/perf-testing.md)).
+5. `make benchmark` / `make benchmark-ray` — informational vs Ray dashboard (no thresholds).
+6. `docker compose -f compose/docker-compose.yml up` — full stack (when available).
 
 ## Standards
 
+- **[Engineering governance](docs/engineering-governance.md)** — coverage bar, ADR sync, documenting unknowns.
 - **[Coding standards](docs/coding-standards.md)** — layout, Python/TS style, API rules, tests, PRs.
-- **[Testing strategy](docs/testing.md)**
-- **[Architecture](docs/architecture.md)**
+- **[Testing strategy](docs/testing.md)** · **`make coverage`** (≥85% on packages + services).
+- **[Architecture](docs/architecture.md)** · **[ADRs](docs/adr/README.md)** · **[Known challenges](docs/known-challenges.md)**.
 
 ## Pull requests
 

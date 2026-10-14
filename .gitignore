@@ -33,3 +33,8 @@ apps/web/node_modules/
 # Data
 *.db
 *.sqlite3
+
+# Generated benchmark tables (jobs-list-latency.md is tracked — updated by make perf / make benchmark)
+benchmark-results/*
+!benchmark-results/README.md
+!benchmark-results/jobs-list-latency.md

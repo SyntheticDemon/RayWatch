@@ -70,7 +70,11 @@ Keep **1–3** stable scenarios; run on `main` nightly or release tags to avoid 
 | **Ruff** lint + format | Every PR |
 | **mypy / pyright** on `model`, `adapter-ray`, `api` | Every PR |
 | **TypeScript** `tsc` + ESLint on `apps/web` | Every PR |
-| **Load (later)** | Locust or k6 on `GET /jobs` with large in-memory fixture — guard index performance |
+| **Indexed read SLOs** | `tests/nfr/test_api_latency.py` — p95 thresholds on RayWatch only |
+| **Read-path regression** | `make perf` — p95 vs `tests/perf/baselines.json` (+15% slack); log layers in [perf-improvement-log.md](./perf-improvement-log.md) |
+| **API contract (all routes)** | `tests/unit/test_api_routes_complete.py` — pagination, 404s, schema keys, logs error path |
+| **Measurement stack** | `tests/unit/test_measurement_stack.py`, `test_measurement_regression_guards.py` — latency stats, perf harness, benchmark helpers |
+| **Dashboard comparison (informational)** | `make benchmark` / `make benchmark-ray` — markdown table vs Ray `GET /api/v0/jobs` (no CI thresholds; Ray submit capped) |
 
 ## Local developer workflow
 

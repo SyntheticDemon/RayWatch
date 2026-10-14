@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import bisect
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from raywatch.model.freshness import SyncMeta
 from raywatch.model.ingest import IngestBatch, IngestOp
-from raywatch.model.job import JobDetail, JobSummary
+from raywatch.model.job import JobDetail, JobStatus, JobSummary
 from raywatch.model.task import TaskSummary
 
 
@@ -16,6 +17,7 @@ def _utc_now() -> datetime:
 @dataclass
 class LiveCacheState:
     jobs: dict[str, JobDetail] = field(default_factory=dict)
+    job_ids_sorted: list[str] = field(default_factory=list)
     tasks: dict[str, TaskSummary] = field(default_factory=dict)
     tasks_by_job: dict[str, list[str]] = field(default_factory=dict)
     last_sync_at: datetime | None = None
@@ -28,9 +30,17 @@ class LiveCache:
     def __init__(self) -> None:
         self._state = LiveCacheState()
 
+    def reset(self) -> None:
+        """Drop all in-memory indexes (tests and perf must call this between scenarios)."""
+        self._state = LiveCacheState()
+
     def apply_ingest_batch(self, batch: IngestBatch) -> None:
+        job_touched = False
         for op in batch.ops:
-            self._apply_op(op)
+            if self._apply_op(op):
+                job_touched = True
+        if job_touched and len(batch.ops) > 64:
+            self._rebuild_job_index()
         self._state.cluster_epoch = batch.cluster_epoch
         self._state.last_sync_at = _utc_now()
         self._state.ray_out_of_sync = False
@@ -40,30 +50,53 @@ class LiveCache:
         self._state.ray_out_of_sync = True
         self._state.ray_reachable = False
 
-    def _apply_op(self, op: IngestOp) -> None:
+    def _rebuild_job_index(self) -> None:
+        self._state.job_ids_sorted = sorted(self._state.jobs.keys())
+
+    def _track_job_id(self, job_id: str) -> None:
+        if job_id not in self._state.jobs:
+            return
+        if job_id in self._state.job_ids_sorted:
+            return
+        bisect.insort(self._state.job_ids_sorted, job_id)
+
+    def _untrack_job_id(self, job_id: str) -> None:
+        idx = bisect.bisect_left(self._state.job_ids_sorted, job_id)
+        if idx < len(self._state.job_ids_sorted) and self._state.job_ids_sorted[idx] == job_id:
+            self._state.job_ids_sorted.pop(idx)
+
+    def _apply_op(self, op: IngestOp) -> bool:
         if op.kind == "upsert_job" and op.job is not None:
-            existing = self._state.jobs.get(op.job.job_id)
+            job_id = op.job.job_id
+            existing = self._state.jobs.get(job_id)
             if isinstance(op.job, JobDetail):
-                self._state.jobs[op.job.job_id] = op.job
+                self._state.jobs[job_id] = op.job
             elif existing is not None:
-                self._state.jobs[op.job.job_id] = existing.model_copy(update=op.job.model_dump())
+                self._state.jobs[job_id] = existing.model_copy(update=op.job.model_dump())
             else:
-                self._state.jobs[op.job.job_id] = JobDetail(**op.job.model_dump())
-        elif op.kind == "remove_job" and op.job_id:
+                self._state.jobs[job_id] = JobDetail(**op.job.model_dump())
+            self._track_job_id(job_id)
+            return True
+        if op.kind == "remove_job" and op.job_id:
             self._state.jobs.pop(op.job_id, None)
+            self._untrack_job_id(op.job_id)
             for task_id in self._state.tasks_by_job.pop(op.job_id, []):
                 self._state.tasks.pop(task_id, None)
-        elif op.kind == "upsert_task" and op.task is not None:
+            return True
+        if op.kind == "upsert_task" and op.task is not None:
             self._state.tasks[op.task.task_id] = op.task
             bucket = self._state.tasks_by_job.setdefault(op.task.job_id, [])
             if op.task.task_id not in bucket:
                 bucket.append(op.task.task_id)
-        elif op.kind == "remove_task" and op.task_id:
+            return False
+        if op.kind == "remove_task" and op.task_id:
             task = self._state.tasks.pop(op.task_id, None)
             if task is not None:
                 bucket = self._state.tasks_by_job.get(task.job_id, [])
                 if op.task_id in bucket:
                     bucket.remove(op.task_id)
+            return False
+        return False
 
     def sync_meta(self) -> SyncMeta:
         delay_ms: int | None = None
@@ -78,15 +111,55 @@ class LiveCache:
             cluster_epoch=self._state.cluster_epoch,
         )
 
-    def list_jobs(self, cursor: str | None, limit: int) -> tuple[list[JobSummary], str | None]:
+    def clear_tasks(self) -> None:
+        self._state.tasks.clear()
+        self._state.tasks_by_job.clear()
+
+    def get_task(self, task_id: str) -> TaskSummary | None:
+        return self._state.tasks.get(task_id)
+
+    def list_jobs(
+        self,
+        cursor: str | None,
+        limit: int,
+        *,
+        status: JobStatus | None = None,
+        q: str | None = None,
+        sort: str = "job_id",
+    ) -> tuple[list[JobSummary], str | None]:
         limit = min(max(limit, 1), 100)
-        job_ids = sorted(self._state.jobs.keys())
+        job_ids = list(self._state.job_ids_sorted)
+        if status is not None:
+            job_ids = [jid for jid in job_ids if self._state.jobs[jid].status == status]
+        if q:
+            needle = q.lower().strip()
+            if needle:
+                job_ids = [
+                    jid
+                    for jid in job_ids
+                    if needle in jid.lower()
+                    or needle in self._state.jobs[jid].entrypoint.lower()
+                    or (
+                        self._state.jobs[jid].error_message
+                        and needle in self._state.jobs[jid].error_message.lower()
+                    )
+                ]
+        if sort == "started_at":
+            job_ids.sort(
+                key=lambda jid: self._state.jobs[jid].started_at or _utc_now(),
+                reverse=True,
+            )
+        elif sort == "status":
+            job_ids.sort(key=lambda jid: self._state.jobs[jid].status.value)
+        else:
+            job_ids.sort()
         start = 0
         if cursor:
-            try:
-                start = job_ids.index(cursor) + 1
-            except ValueError:
-                start = 0
+            idx = bisect.bisect_left(job_ids, cursor)
+            if idx < len(job_ids) and job_ids[idx] == cursor:
+                start = idx + 1
+            elif idx < len(job_ids):
+                start = idx
         slice_ids = job_ids[start : start + limit]
         items = [JobSummary(**self._state.jobs[jid].model_dump()) for jid in slice_ids]
         has_more = len(slice_ids) == limit and start + limit < len(job_ids)

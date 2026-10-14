@@ -18,6 +18,7 @@ members = [
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
     "ruff>=0.8",
     "pyright>=1.1",
     "httpx>=0.28",
@@ -43,10 +44,13 @@ pythonpath = [
     "packages/adapter-ray/src",
     "services/api/src",
     "services/collector/src",
+    "tests",
 ]
 asyncio_mode = "auto"
 markers = [
     "integration: requires Ray via Docker compose",
+    "benchmark: informational latency tables (no thresholds); use make benchmark",
+    "perf: read-path latency regression vs tests/perf/baselines.json; use make perf",
 ]
 filterwarnings = ["ignore::DeprecationWarning"]
 
@@ -61,6 +65,19 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.coverage.run]
+source = ["packages", "services"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+fail_under = 85
+show_missing = true
 
 [tool.pyright]
 include = ["packages/**/src", "services/**/src", "tests"]

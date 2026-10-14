@@ -45,3 +45,16 @@ async def test_fetch_and_normalize_real_jobs_payload() -> None:
     for op in batch.ops:
         assert op.job is not None
         assert op.job.job_id
+
+
+@pytest.mark.asyncio
+async def test_sync_ingests_tasks_when_cluster_has_tasks() -> None:
+    _integration_required()
+    from raywatch.api.state import live_cache
+    from raywatch.collector.sync_loop import sync_active_jobs
+
+    await sync_active_jobs(live_cache)
+    # Cluster may have zero tasks; if Ray returns tasks, we must index them.
+    if live_cache.task_count() > 0:
+        task_id = next(iter(live_cache._state.tasks.keys()))
+        assert live_cache.get_task(task_id) is not None

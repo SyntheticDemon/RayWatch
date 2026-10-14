@@ -1,0 +1,34 @@
+{
+  "result": true,
+  "msg": "",
+  "data": {
+    "result": {
+      "total": 2,
+      "result": [
+        {
+          "task_id": "aaaabbbbccccddddeeeeeeeeffffffffffffffff02000000",
+          "attempt_number": 0,
+          "name": "train_step",
+          "state": "RUNNING",
+          "job_id": "01000000",
+          "func_or_class_name": "train_step",
+          "parent_task_id": null,
+          "worker_id": "worker-1",
+          "actor_id": null
+        },
+        {
+          "task_id": "bbbbccccddddeeeeffffffffaaaabbbbbbbbbbbb02000000",
+          "attempt_number": 1,
+          "name": "eval_step",
+          "state": "FAILED",
+          "job_id": "01000000",
+          "func_or_class_name": "eval_step",
+          "parent_task_id": "aaaabbbbccccddddeeeeeeeeffffffffffffffff02000000",
+          "worker_id": "worker-2",
+          "actor_id": null,
+          "error_type": "WorkerCrashed"
+        }
+      ]
+    }
+  }
+}

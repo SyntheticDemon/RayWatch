@@ -14,11 +14,7 @@ FIXTURE_JOBS = Path(__file__).resolve().parent / "fixtures" / "ray" / "jobs_list
 
 @pytest.fixture(autouse=True)
 def _reset_live_cache() -> None:
-    live_cache._state.jobs.clear()
-    live_cache._state.tasks.clear()
-    live_cache._state.tasks_by_job.clear()
-    live_cache._state.last_sync_at = None
-    live_cache._state.ray_out_of_sync = False
+    live_cache.reset()
 
 
 @pytest.fixture

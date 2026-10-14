@@ -39,5 +39,6 @@ make ray-down
 
 1. Run Ray head (`make ray-up`).
 2. Optionally submit a smoke job (`scripts/ray_submit_smoke.sh`).
-3. Capture `curl localhost:8265/api/v0/jobs/` → update golden fixture if shape changed.
+3. Capture `curl localhost:8265/api/v0/jobs` → update golden fixture if shape changed.
+4. Optional: `make benchmark-ray` → compare jobs-list p95 vs Ray dashboard at increasing job counts (`benchmark-results/jobs-list-latency.md` when `RAYWATCH_BENCHMARK_WRITE=1`).
 4. Run `make test-integration-ray`.

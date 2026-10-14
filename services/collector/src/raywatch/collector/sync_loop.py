@@ -9,7 +9,8 @@ from pathlib import Path
 
 import httpx
 from raywatch.adapter_ray.normalize_jobs import normalize_jobs_payload
-from raywatch.adapter_ray.ray_client import fetch_jobs_json
+from raywatch.adapter_ray.normalize_tasks import normalize_tasks_payload
+from raywatch.adapter_ray.ray_client import fetch_jobs_json, fetch_tasks_json
 from raywatch.engine.live_cache import LiveCache
 
 logger = logging.getLogger(__name__)
@@ -23,21 +24,58 @@ def _fixture_path() -> Path | None:
     return path if path.is_file() else None
 
 
+def _tasks_fixture_path() -> Path | None:
+    raw = os.environ.get("RAYWATCH_FIXTURE_TASKS")
+    if not raw:
+        return None
+    path = Path(raw)
+    return path if path.is_file() else None
+
+
+def _ray_internal_to_submission_id(live_cache: LiveCache) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for job in live_cache._state.jobs.values():
+        ray_id = job.metadata.get("ray_internal_job_id")
+        if ray_id:
+            mapping[str(ray_id)] = job.job_id
+    return mapping
+
+
+async def _apply_tasks_payload(
+    live_cache: LiveCache,
+    payload: dict,
+    cluster_epoch: str,
+) -> None:
+    live_cache.clear_tasks()
+    mapping = _ray_internal_to_submission_id(live_cache)
+    batch = normalize_tasks_payload(payload, mapping, cluster_epoch=cluster_epoch)
+    live_cache.apply_ingest_batch(batch)
+
+
 async def sync_active_jobs(live_cache: LiveCache) -> None:
     fixture = _fixture_path()
+    tasks_fixture = _tasks_fixture_path()
+    cluster_epoch = "fixture" if fixture else "live"
+
     if fixture is not None:
         from raywatch.adapter_ray.fixture_loader import load_json_fixture
 
         payload = load_json_fixture(fixture)
-        batch = normalize_jobs_payload(payload)
+        batch = normalize_jobs_payload(payload, cluster_epoch=cluster_epoch)
         live_cache.apply_ingest_batch(batch)
+        if tasks_fixture is not None:
+            task_payload = load_json_fixture(tasks_fixture)
+            await _apply_tasks_payload(live_cache, task_payload, cluster_epoch)
         return
 
     try:
         async with httpx.AsyncClient() as client:
             payload = await fetch_jobs_json(client)
-        batch = normalize_jobs_payload(payload)
+        batch = normalize_jobs_payload(payload, cluster_epoch=cluster_epoch)
         live_cache.apply_ingest_batch(batch)
+        async with httpx.AsyncClient() as client:
+            tasks_payload = await fetch_tasks_json(client)
+        await _apply_tasks_payload(live_cache, tasks_payload, cluster_epoch)
     except Exception:
         logger.exception("sync_active_jobs failed")
         live_cache.mark_ray_unreachable()

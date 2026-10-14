@@ -23,8 +23,27 @@ export type JobDetail = JobSummary & {
   metadata: Record<string, string>;
 };
 
+export type TaskSummary = {
+  task_id: string;
+  job_id: string;
+  name: string;
+  status: string;
+  func_or_class: string;
+  worker_id: string | null;
+  actor_id: string | null;
+  parent_task_id: string | null;
+  attempt_count: number;
+  error_message: string | null;
+};
+
 export type JobsPage = {
   items: JobSummary[];
+  next_cursor: string | null;
+  sync: SyncMeta;
+};
+
+export type TasksPage = {
+  items: TaskSummary[];
   next_cursor: string | null;
   sync: SyncMeta;
 };
@@ -34,18 +53,80 @@ export type JobResponse = {
   sync: SyncMeta;
 };
 
-async function fetchJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`);
+export type TaskResponse = {
+  task: TaskSummary;
+  sync: SyncMeta;
+};
+
+export type JobLogsResponse = {
+  job_id: string;
+  logs: string;
+  error_message: string | null;
+  sync: SyncMeta;
+};
+
+export type StopJobResponse = {
+  job_id: string;
+  accepted: boolean;
+  message: string;
+  sync: SyncMeta;
+};
+
+export type JobsQuery = {
+  cursor?: string;
+  limit?: number;
+  status?: string;
+  q?: string;
+  sort?: "job_id" | "started_at" | "status";
+};
+
+export type SyncTriggerResponse = {
+  accepted: boolean;
+  message: string;
+  sync: SyncMeta;
+  job_count: number;
+  task_count: number;
+};
+
+async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${baseUrl}${path}`, init);
   if (!response.ok) {
     throw new Error(`API ${path} failed: ${response.status}`);
   }
   return response.json() as Promise<T>;
 }
 
-export function fetchJobs(): Promise<JobsPage> {
-  return fetchJson<JobsPage>("/jobs");
+function qs(params: Record<string, string | number | undefined>): string {
+  const parts = Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== "")
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
+  return parts.length ? `?${parts.join("&")}` : "";
+}
+
+export function fetchJobs(query: JobsQuery = {}): Promise<JobsPage> {
+  return fetchJson<JobsPage>(`/jobs${qs(query)}`);
 }
 
 export function fetchJob(jobId: string): Promise<JobResponse> {
   return fetchJson<JobResponse>(`/jobs/${jobId}`);
+}
+
+export function fetchJobTasks(jobId: string, cursor?: string): Promise<TasksPage> {
+  return fetchJson<TasksPage>(`/jobs/${jobId}/tasks${qs({ cursor, limit: 100 })}`);
+}
+
+export function fetchTask(taskId: string): Promise<TaskResponse> {
+  return fetchJson<TaskResponse>(`/tasks/${taskId}`);
+}
+
+export function fetchJobLogs(jobId: string): Promise<JobLogsResponse> {
+  return fetchJson<JobLogsResponse>(`/jobs/${jobId}/logs`);
+}
+
+export function stopJob(jobId: string): Promise<StopJobResponse> {
+  return fetchJson<StopJobResponse>(`/jobs/${jobId}/stop`, { method: "POST" });
+}
+
+export function triggerSync(): Promise<SyncTriggerResponse> {
+  return fetchJson<SyncTriggerResponse>("/sync/trigger", { method: "POST" });
 }

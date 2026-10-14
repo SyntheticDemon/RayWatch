@@ -2,7 +2,7 @@
 name = "raywatch-engine"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["raywatch-model"]
+dependencies = ["raywatch-model", "psycopg[binary]>=3.2"]
 
 [tool.uv.sources]
 raywatch-model = { workspace = true }
