@@ -67,8 +67,6 @@ def normalize_jobs_payload(payload: dict[str, Any], cluster_epoch: str = "defaul
             ray_internal = driver_info.get("id")
         if ray_internal:
             metadata["ray_internal_job_id"] = str(ray_internal)
-        else:
-            metadata.setdefault("ray_internal_job_id", job_id)
         driver_pid = row.get("driver_pid") or row.get("driverPid")
         if driver_info.get("pid") is not None:
             driver_pid = driver_info.get("pid")

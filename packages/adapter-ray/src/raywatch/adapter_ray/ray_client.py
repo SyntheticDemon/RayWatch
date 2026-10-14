@@ -6,6 +6,7 @@ import os
 from typing import Any
 
 import httpx
+from raywatch.adapter_ray.normalize_tasks import _task_rows_from_payload, task_total_from_payload
 
 
 def ray_dashboard_base_url() -> str:
@@ -26,6 +27,16 @@ async def fetch_tasks_json(
     return body
 
 
+async def fetch_all_tasks_json(client: httpx.AsyncClient) -> dict[str, Any]:
+    cap = int(os.environ.get("RAYWATCH_RAY_TASKS_FETCH_LIMIT", "10000"))
+    body = await fetch_tasks_json(client, limit=min(cap, 500))
+    total = task_total_from_payload(body)
+    rows = _task_rows_from_payload(body)
+    if total is not None and total > len(rows):
+        body = await fetch_tasks_json(client, limit=min(total, cap))
+    return body
+
+
 async def fetch_job_logs_text(client: httpx.AsyncClient, submission_id: str) -> str:
     url = f"{ray_dashboard_base_url()}/api/jobs/{submission_id}/logs"
     response = await client.get(url, timeout=60.0)
@@ -38,10 +49,18 @@ async def fetch_job_logs_text(client: httpx.AsyncClient, submission_id: str) -> 
     return ""
 
 
+def _ray_jobs_fetch_limit() -> int:
+    return int(os.environ.get("RAYWATCH_RAY_JOBS_FETCH_LIMIT", "500"))
+
+
 async def fetch_jobs_json(client: httpx.AsyncClient) -> dict[str, Any]:
     # Ray 2.59+: trailing slash returns 404 on some versions.
     url = f"{ray_dashboard_base_url()}/api/v0/jobs"
-    response = await client.get(url, timeout=30.0)
+    response = await client.get(
+        url,
+        params={"limit": _ray_jobs_fetch_limit()},
+        timeout=60.0,
+    )
     response.raise_for_status()
     body = response.json()
     if not isinstance(body, dict):

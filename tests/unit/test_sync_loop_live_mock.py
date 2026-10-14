@@ -46,7 +46,7 @@ async def test_sync_live_applies_jobs_and_tasks(monkeypatch: pytest.MonkeyPatch)
         return tasks_payload
 
     monkeypatch.setattr("raywatch.collector.sync_loop.fetch_jobs_json", fake_jobs)
-    monkeypatch.setattr("raywatch.collector.sync_loop.fetch_tasks_json", fake_tasks)
+    monkeypatch.setattr("raywatch.collector.sync_loop.fetch_all_tasks_json", fake_tasks)
 
     await sync_active_jobs(live_cache)
     assert live_cache.job_count() == 1

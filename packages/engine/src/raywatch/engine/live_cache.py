@@ -258,7 +258,13 @@ class LiveCache:
         self, job_id: str, cursor: str | None, limit: int
     ) -> tuple[list[TaskSummary], str | None]:
         limit = min(max(limit, 1), 500)
-        task_ids = self._state.tasks_by_job.get(job_id, [])
+        task_ids = list(self._state.tasks_by_job.get(job_id, []))
+        job = self._state.jobs.get(job_id)
+        internal = job.metadata.get("ray_internal_job_id") if job else None
+        if internal and internal != job_id:
+            for tid in self._state.tasks_by_job.get(internal, []):
+                if tid not in task_ids:
+                    task_ids.append(tid)
         start = 0
         if cursor:
             try:

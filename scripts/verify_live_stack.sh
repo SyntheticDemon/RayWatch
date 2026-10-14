@@ -24,11 +24,17 @@ for _ in $(seq 1 30); do
 done
 curl -sf "http://127.0.0.1:${API_PORT}/health" >/dev/null
 
-JOB_ID="$(curl -sf "http://127.0.0.1:${API_PORT}/jobs?limit=5" | python3 -c "
+JOB_ID="$(curl -sf "http://127.0.0.1:${API_PORT}/jobs?limit=50" | python3 -c "
 import json,sys
 d=json.load(sys.stdin)
 items=d.get('items') or []
-print(items[0]['job_id'] if items else '')
+# Prefer a job that already has indexed tasks (demo task-heavy job).
+for j in items:
+    if (j.get('task_total') or 0) > 0:
+        print(j['job_id'])
+        break
+else:
+    print(items[0]['job_id'] if items else '')
 ")"
 if [[ -z "${JOB_ID}" ]]; then
   echo "No jobs from live API" >&2
@@ -54,6 +60,8 @@ b=json.load(sys.stdin)
 items=b.get('items') or []
 print('tasks for job:', len(items))
 assert 'sync' in b
+if len(items) == 0:
+    print('warn: no tasks indexed for chosen job (Ray may have dropped task state)')
 "
 
 echo "==> Integration tests (live Ray)"

@@ -9,6 +9,7 @@ async def test_fetch_tasks_json(monkeypatch: pytest.MonkeyPatch) -> None:
 
     async def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/api/v0/tasks"
+        assert request.url.params.get("limit") == "100"
         return httpx.Response(200, json={"data": {"result": {"result": []}}})
 
     transport = httpx.MockTransport(handler)

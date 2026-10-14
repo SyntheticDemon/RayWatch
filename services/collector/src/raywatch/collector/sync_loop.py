@@ -13,13 +13,17 @@ from raywatch.adapter_ray.normalize_jobs import normalize_jobs_payload
 from raywatch.adapter_ray.normalize_tasks import normalize_tasks_payload, task_total_from_payload
 from raywatch.adapter_ray.ray_client import (
     fetch_actors_json,
+    fetch_all_tasks_json,
     fetch_jobs_json,
     fetch_nodes_json,
-    fetch_tasks_json,
 )
 from raywatch.engine.incremental_sync import augment_jobs_batch, augment_tasks_batch
 from raywatch.engine.live_cache import LiveCache
 from raywatch.engine.sync_side_effects import after_live_sync, job_snapshot_store
+from raywatch.engine.task_job_mapping import (
+    ray_internal_to_submission_id,
+    rekey_tasks_to_submission_ids,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,15 +52,6 @@ def _tasks_fixture_path() -> Path | None:
     return path if path.is_file() else None
 
 
-def _ray_internal_to_submission_id(live_cache: LiveCache) -> dict[str, str]:
-    mapping: dict[str, str] = {}
-    for job in live_cache._state.jobs.values():
-        ray_id = job.metadata.get("ray_internal_job_id")
-        if ray_id:
-            mapping[str(ray_id)] = job.job_id
-    return mapping
-
-
 async def _apply_cluster_payload(
     live_cache: LiveCache,
     nodes_payload: dict | None,
@@ -72,7 +67,7 @@ async def _apply_tasks_payload(
     payload: dict,
     cluster_epoch: str,
 ) -> None:
-    mapping = _ray_internal_to_submission_id(live_cache)
+    mapping = ray_internal_to_submission_id(live_cache)
     batch = normalize_tasks_payload(payload, mapping, cluster_epoch=cluster_epoch)
     batch = augment_tasks_batch(
         live_cache,
@@ -80,6 +75,7 @@ async def _apply_tasks_payload(
         ray_task_total=task_total_from_payload(payload),
     )
     live_cache.apply_ingest_batch(batch)
+    rekey_tasks_to_submission_ids(live_cache, cluster_epoch=cluster_epoch)
 
 
 async def sync_active_jobs(live_cache: LiveCache) -> None:
@@ -123,7 +119,7 @@ async def sync_active_jobs(live_cache: LiveCache) -> None:
         )
         live_cache.apply_ingest_batch(batch)
         async with httpx.AsyncClient() as client:
-            tasks_payload = await fetch_tasks_json(client)
+            tasks_payload = await fetch_all_tasks_json(client)
         await _apply_tasks_payload(live_cache, tasks_payload, cluster_epoch)
         async with httpx.AsyncClient() as client:
             nodes_payload = await fetch_nodes_json(client)

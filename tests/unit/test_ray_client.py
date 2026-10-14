@@ -24,7 +24,7 @@ async def test_fetch_jobs_json_uses_v0_path_without_trailing_slash(
     async with httpx.AsyncClient(transport=transport) as client:
         body = await fetch_jobs_json(client)
     assert body == {"data": {}}
-    assert captured == ["http://ray.test:8265/api/v0/jobs"]
+    assert captured == ["http://ray.test:8265/api/v0/jobs?limit=500"]
 
 
 @pytest.mark.asyncio
