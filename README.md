@@ -21,7 +21,9 @@ The Ray Dashboard (port `8265`) shows what the Ray head still has in memory. Ray
 
 Search by the meaning of an error or a log line is tracked in [#39](https://github.com/SyntheticDemon/RayWatch/issues/39).
 
-**Status: alpha (0.1.x)** — **past the original MVP**: single-app CLI, live Ray sync, jobs/actors/cluster UI, ingest gates, and optional job snapshots ship today. Current focus is **Ray Dashboard parity**, **scale/retention** (hot/cold index, full history), and **production hardening**—not a scaffold. See [product delivery](docs/MVP-DELIVERY.md), [parity matrix](docs/ray-dashboard-feature-matrix.md), [known gaps](docs/known-challenges.md).
+**Status:** 0.1.x (alpha).
+
+See [what is included](docs/MVP-DELIVERY.md), the [Ray Dashboard comparison](docs/ray-dashboard-feature-matrix.md), and [known limitations](docs/known-challenges.md).
 
 **License:** [Apache-2.0](LICENSE). RayWatch is independent of Anyscale; see [NOTICE](NOTICE).
 
